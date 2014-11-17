@@ -2,10 +2,15 @@
 //An attempt at clear easy to use PHP framework. 
 function main() {
  // main program control loop when called from web
- global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms ; 
+ global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath ; 
+
+#  ini_set('display_errors',1);
+#  ini_set('display_startup_errors',1);
+#  error_reporting(-1);
+
+
  include_once("glass-core.php") ; 
  $db = glconnect() ; 
-
  $fromip = $_SERVER['REMOTE_ADDR'];
  $script = $_SERVER['PHP_SELF'];
  $mode = dt($_REQUEST['mode']) ; 
@@ -51,7 +56,7 @@ function main() {
  
  # list($login,$name,$level,$perms) = glauth() ;  
  # print gltable(gaaafm("select uniq,login,name,passwd from people"),array('uniq','passwd')) ; 
- if($mode == 'reports') {
+ if($mode == 'reports' or $mode == 'item' or $mode == 'run') {
   include_once("glass-reportengine.php") ; 
   reports() ;   
  } ;

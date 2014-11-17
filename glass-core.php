@@ -1,7 +1,7 @@
 <?php
 function glconnect() {
  // database connector
- global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic ; 
+ global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $csspath ; 
  //get credentials from settings.inc
   include('settings.inc') ; 
   $db = mysqli_connect("$dbserver", "$dblogin", "$dbpasswd", "$database");
@@ -26,6 +26,15 @@ function gafm($query) {
   $result->data_seek(0);
   $a = array_values($result->fetch_assoc()) ; 
   return $a;
+};
+function gsfm($query) { 
+  global $db;
+  if (!$db || empty($db)) { $db = glconnect(); } ; 
+  $a = array() ; //declare the array
+  $result = $db->query($query) or die("gafm failed:<br>\n$query<br>\n" . $db->connect_errno . " : " . $db->connect_error . "<br>\n");
+  $result->data_seek(0);
+  $a = array_values($result->fetch_assoc()) ; 
+  return $a[0] ;
 };
 
 function gaafm($query) { 
@@ -104,7 +113,6 @@ function gltable($a,$toton) {
 function dt($string) {
   global $lang ; 
    if (empty($string)) {
-        return '';
     } else {
         $string = trim($string) ; 
         $strip = array('/^ /','/\s+$/', '/\$/', '/\n/', '/\r/', '/\n/', '/\,/', '/\:/','/\@/','/\%/','/0x/');
@@ -264,6 +272,29 @@ function glakey() {
         $str.= substr("$string", $c, 1);
     }
     return $str;
+};
+
+function nff($number) { 
+    global $lang, $thousands, $decimals ; 
+    $places = 2 ; 
+    if($thousands != ',' or $decimals != '.') { 
+     $number =  number_format($number, $places, "$decimals", "$thousands") ; 
+    } else { 
+     $number =  number_format($number, $places, '.', ',') ; 
+    } ;   
+    return $number ;
+} ; 
+
+function gllog($log, $what) {
+    global $portal, $login, $fromip ; 
+    if ($log == '') {
+        $log = 'nolog';
+    };
+    $now1 = date("Ymd");
+    $now2 = date("Ymd H:i:s");
+    $fileout = fopen("logs/$now1-$portal$login-$log", "a");
+    fputs($fileout, "$now2    $login    $fromip    $what\n");
+    fclose($fileout);
 };
 
 

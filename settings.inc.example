@@ -6,6 +6,10 @@ $database = 'glass' ;
 $brand = 'GLASS' ; 
 $webroot = '/glass/' ; 
 $shellroot = '/home/domains/foo.com/public/glass' ; 
+$reservoir = '/home/domains/foo.com/reservoir' ; #This can be outside of the web server tree
+$csspath = '/cogs/' ; #path to older bootstrap for now. Will have custom CSS soon
+$thousands = ',' ; 
+$decimals = '.' ; 
 #This should be copied to settings.inc and set for your system. 
 #.inc files should be configured to be non-retrievable by your web server
 ?>
