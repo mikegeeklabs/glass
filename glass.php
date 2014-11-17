@@ -2,7 +2,7 @@
 //An attempt at clear easy to use PHP framework. 
 function main() {
  // main program control loop when called from web
- global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $level, $perms ; 
+ global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms ; 
  include_once("glass-core.php") ; 
  $db = glconnect() ; 
 
@@ -16,7 +16,6 @@ function main() {
 
  if (isset($_SERVER['PHP_AUTH_USER']) or $mode == 'login') {
    list($login,$name,$level,$perms) = glauth() ;  
-   
  } ; 
  if (isset($_SERVER['PHP_AUTH_USER']) and $mode == 'logout') {
    setcookie("a", "");
@@ -51,11 +50,11 @@ function main() {
  } ; 
  
  # list($login,$name,$level,$perms) = glauth() ;  
-
- print gltable(gaaafm("select uniq,login,name,passwd from people"),array('uniq','passwd')) ; 
- 
- 
-
+ # print gltable(gaaafm("select uniq,login,name,passwd from people"),array('uniq','passwd')) ; 
+ if($mode == 'reports') {
+  include_once("glass-reportengine.php") ; 
+  reports() ;   
+ } ;
 } ;
 
 
