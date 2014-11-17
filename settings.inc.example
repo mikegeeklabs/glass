@@ -1,0 +1,12 @@
+<?php
+$dbserver = 'localhost' ; 
+$dblogin = 'glassuser' ; 
+$dbpasswd = 'glassuserpasswd' ; 
+$database = 'glass' ; 
+$brand = 'GLASS' ; 
+$webroot = '/glass/' ; 
+$shellroot = '/home/domains/foo.com/public/glass' ; 
+#This should be copied to settings.inc and set for your system. 
+#.inc files should be configured to be non-retrievable by your web server
+?>
+
