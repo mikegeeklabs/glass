@@ -27,7 +27,8 @@ function glassdocsdownload() {
         #    } elseif (preg_match("/printqueue/", $filename, $m)) {   #This can be hard set for other structures. Be careful. Please like to attack file downlaoders.
         
     } else {
-        print "<br>File: $dir/$fname  f: $filename = not allowed";
+        #print "<br>File: $dir/$fname  f: $filename = not allowed";
+        print "Error: $filename  not found or not allowed" ; 
         return;
     };
     $file_extension = strtolower(substr(strrchr($filename, "."), 1));
