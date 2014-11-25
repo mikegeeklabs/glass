@@ -54,10 +54,14 @@ function gaaafm($query) {
   if (!$db || empty($db)) { $db = glconnect(); } ; 
   $a = array() ; //declare the array
   $result = $db->query($query) or die("gaaafm failed:<br>\n$query<br>\n" . $db->connect_errno . " : " . $db->connect_error . "<br>\n");
+  if(is_object($result)) {
   $result->data_seek(0);
   $i = 0 ; 
   while ($row = $result->fetch_assoc()) { $a[$i] = $row ; $i++ ; } ; 
-  return $a;
+   return $a;
+  } else { 
+   return array() ;  
+  } ; 
 };
 
 function runsql($query) { 
@@ -73,6 +77,10 @@ function glist($a) {
     } ; 
   } ;   
 } ; 
+function glprintr($thing) { 
+ print "<pre>" . print_r($thing,1) . "</pre>" ; 
+} ; 
+
 function gltable($a,$toton) {
   $header = '<table>' ; 
   $footer = '</table>' ; 

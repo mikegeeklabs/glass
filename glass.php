@@ -49,6 +49,7 @@ function main() {
  if (isset($_SERVER['PHP_AUTH_USER'])) {
    print "<ul>" ; 
    print "<li><a href='$script'>Home</A>" ; 
+   print "<li><a href='$script?mode=tables'>Data</A>" ; 
    print "<li><a href='$script?mode=reports'>Reports</A>" ; 
    print "<li><a href='$script?mode=logout'>Logout</A>" ; 
    print "</ul>" ;  
@@ -56,7 +57,15 @@ function main() {
  
  # list($login,$name,$level,$perms) = glauth() ;  
  # print gltable(gaaafm("select uniq,login,name,passwd from people"),array('uniq','passwd')) ; 
- if($mode == 'reports' or $mode == 'item' or $mode == 'run') {
+
+ if($mode == 'tables') {
+  include_once("glass-tables.php") ; 
+  gltables() ;   
+ } ;
+
+
+ #This is a little awkward, but makes it easier to to run the report engine isolated. 
+ if($mode == 'reports' or $mode == 'item' or $mode == 'run' or $mode == 'export') {
   include_once("glass-reportengine.php") ; 
   reports() ;   
  } ;

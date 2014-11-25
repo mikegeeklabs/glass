@@ -1771,7 +1771,7 @@ EOF;
         };
     };
     if ($sseclevel > 98) {
-        print "<span style='border:2px solid #AAAAAA;padding:10px;margin:20px;'>UF:&nbsp;&nbsp;<a href='glass.php?mode=edit&table=reports&uniq=$uniq'><i class='icon-wrench' style='font-size: 18px;'></i></a><a href='reports.php?mode=export&uniq=$uniq'><i class='icon-wrench' style='font-size: 18px;color:red;'></i></a>";
+        print "<span style='border:2px solid #AAAAAA;padding:10px;margin:20px;'><a href='glass.php?mode=edit&table=reports&uniq=$uniq'><i class='icon-wrench' style='font-size: 18px;'></i></a><a href='glass.php?mode=export&uniq=$uniq'><i class='icon-wrench' style='font-size: 18px;color:red;'></i></a>";
         print "&nbsp;&nbsp;<input type=checkbox name=debug value=true><i class='icon-bullhorn' style='font-size: 18px;'></i></span>";
     };
     if ($uniq > 9999 and @in_array('editreport', $perms)) {
