@@ -76,7 +76,7 @@ function gltableedit($table, $uniq, $editmode, $horvert,$query) {
                     $val = preg_replace($replace, '\'', $val);
                     $q = "update $table set `$j[2]` = '$val' where uniq = '$j[1]'";
                 };
-                print "<pre>$q</pre>" ; 
+                #print "<pre>$q</pre>" ; 
                 $f = mysqli_query($db,$q) or die("Query failed : <p>$q<p>" . mysqli_error());
                 $start = $j[1];
             };
@@ -88,6 +88,26 @@ function gltableedit($table, $uniq, $editmode, $horvert,$query) {
 
 } ; 
 
+
+#*************************** 5. row ***************************
+#           CONSTRAINT_CATALOG: def
+#            CONSTRAINT_SCHEMA: glass
+#              CONSTRAINT_NAME: customers_ibfk_1
+#                TABLE_CATALOG: def
+#                 TABLE_SCHEMA: glass
+#                   TABLE_NAME: customers
+#                  COLUMN_NAME: state
+#             ORDINAL_POSITION: 1
+#POSITION_IN_UNIQUE_CONSTRAINT: 1
+#      REFERENCED_TABLE_SCHEMA: glass
+#        REFERENCED_TABLE_NAME: state
+#       REFERENCED_COLUMN_NAME: state
+#5 rows in set (0.02 sec)
+include("settings.inc") ; 
+
+   # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
+   # print gltable(gaaafm("$q")) ; 
+   # print_r(gaaafm("$q")) ; 
 
     $query = "select * from $table where uniq = '$uniq'" ;
  #   $query = "select * from $table" ;
@@ -142,8 +162,31 @@ function gltableedit($table, $uniq, $editmode, $horvert,$query) {
             $type = $finfo[$c]->type ; 
             $decimal = $finfo[$c]->decimal ; 
 
+   # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
+   # print gltable(gaaafm("$q")) ; 
+   # print_r(gaaafm("$q")) ; 
+   
+   list($reftable,$refcolumn) = gafm("select REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+   where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'") ; 
+   
+
             if($key == 'uniq') { #The master key, not editable. 
-                print "<td><input name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>" ;         
+                print "<td><input name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>" ;
+                         
+            } elseif (!empty($reftable) and !empty($refcolumn)) { 
+            
+            print "<td>" ; 
+            print "<select name=\"f.$uniq.$key\">" ; 
+            print "<optgroup label='" . bbf('Current') ."'>";
+            print "<OPTION VALUE='$val'>$val";
+            print "<optgroup label='" . bbf('Available') ."'>";
+            $q = "select distinct($refcolumn) from $reftable order by $refcolumn";
+            $r = mysqli_query($db,$q) or die("Query failed : " . mysql_error());
+                while (list($d) = mysqli_fetch_row($r)) {
+                    print "<OPTION VALUE='$d'>$d";
+                };
+            print "</optgroup></select>\n";
+            print "</td>" ; 
 
             } elseif ($type == '252' and $horvert == 'vert') { #text
                 print "<td><textarea name=\"f.$uniq.$key\" rows=4 cols='80' placeholder=''>$val</textarea></td>" ;         

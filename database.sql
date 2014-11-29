@@ -16,6 +16,125 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `customers`
+--
+
+DROP TABLE IF EXISTS `customers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `customers` (
+  `uniq` bigint(20) NOT NULL AUTO_INCREMENT,
+  `portal` varchar(10) NOT NULL DEFAULT 'demo',
+  `account` varchar(20) NOT NULL DEFAULT '00000001',
+  `passwd` varchar(20) NOT NULL DEFAULT '87654321010101239',
+  `seclevel` int(6) NOT NULL DEFAULT '5',
+  `maid` varchar(20) DEFAULT '',
+  `name` varchar(120) DEFAULT NULL,
+  `accttype` varchar(10) DEFAULT '',
+  `lastname` varchar(40) DEFAULT '',
+  `firstname` varchar(40) DEFAULT '',
+  `phone1` varchar(20) DEFAULT NULL,
+  `phone2` varchar(20) DEFAULT NULL,
+  `phone3` varchar(20) DEFAULT NULL,
+  `phone4` varchar(20) DEFAULT NULL,
+  `phonenotify` int(1) NOT NULL DEFAULT '0',
+  `sms1` varchar(20) DEFAULT NULL,
+  `sms2` varchar(20) DEFAULT NULL,
+  `smsnotify` int(1) NOT NULL DEFAULT '0',
+  `email1` varchar(120) DEFAULT NULL,
+  `email2` varchar(120) DEFAULT NULL,
+  `emailnotify` int(1) NOT NULL DEFAULT '0',
+  `address1` varchar(80) DEFAULT NULL,
+  `address2` varchar(80) DEFAULT NULL,
+  `city` varchar(20) DEFAULT NULL,
+  `state` varchar(20) DEFAULT NULL,
+  `postalcode` varchar(20) DEFAULT NULL,
+  `countrycode` varchar(10) DEFAULT '',
+  `billaddress` varchar(80) DEFAULT NULL,
+  `billcity` varchar(20) DEFAULT NULL,
+  `billstate` varchar(10) DEFAULT NULL,
+  `billpostalcode` varchar(20) DEFAULT NULL,
+  `billcountrycode` varchar(10) DEFAULT '',
+  `group1` varchar(40) DEFAULT '',
+  `group2` varchar(40) DEFAULT '',
+  `group3` varchar(40) DEFAULT '',
+  `group4` varchar(40) DEFAULT '',
+  `group5` varchar(40) DEFAULT '',
+  `group6` varchar(40) DEFAULT '',
+  `othergroups` varchar(80) DEFAULT '',
+  `tz` varchar(10) DEFAULT '',
+  `comments` text,
+  `notifydays` int(2) DEFAULT '3',
+  `bdom` int(3) DEFAULT '1',
+  `sendpdf` int(1) DEFAULT '0',
+  `contract` varchar(20) DEFAULT '',
+  `defaultlang` varchar(10) DEFAULT 'en',
+  `custstatus` varchar(10) DEFAULT 'active',
+  `lastbalance` double(16,2) DEFAULT '0.00',
+  `payname` varchar(20) DEFAULT '',
+  `payphone` varchar(20) DEFAULT '',
+  `payemail` varchar(80) DEFAULT '',
+  `payaddress` varchar(40) DEFAULT '',
+  `paycity` varchar(20) DEFAULT '',
+  `paystate` varchar(20) DEFAULT '',
+  `payzip` varchar(15) DEFAULT '',
+  `paycountry` varchar(15) DEFAULT '',
+  `payccnum` varchar(20) DEFAULT '',
+  `payccexpmonth` varchar(2) DEFAULT '',
+  `payccexpyear` varchar(6) DEFAULT '',
+  `payccv2` varchar(6) DEFAULT '',
+  `payabarouting` varchar(15) DEFAULT '',
+  `payabaaccount` varchar(20) DEFAULT '',
+  `created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `lastlogin` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `fromip` varchar(20) NOT NULL DEFAULT '127.0.0.2',
+  `velocity` int(8) DEFAULT '0',
+  `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `lastseenby` varchar(20) DEFAULT '',
+  `mgmtfee` varchar(10) DEFAULT 'none',
+  `autovendperc` int(6) DEFAULT '0',
+  `autowalletfund` double(16,2) DEFAULT '0.00',
+  `discountkwh` int(10) DEFAULT '0',
+  `discountperc` int(10) DEFAULT '0',
+  `minkwh` int(10) DEFAULT '0',
+  `govnumtype` int(1) DEFAULT '0',
+  `route` varchar(10) DEFAULT '',
+  `correlative` varchar(20) DEFAULT '',
+  `dailyinterest` double(16,8) DEFAULT '0.00000000',
+  `specialstatus` varchar(20) DEFAULT '',
+  `specialagent` varchar(20) DEFAULT '',
+  `specialmessage` text,
+  `creditlimit` double(16,2) DEFAULT '0.00',
+  `idtype` varchar(20) DEFAULT '',
+  `iddata` varchar(40) DEFAULT '',
+  `billpowerfactor` int(1) DEFAULT '0',
+  `billkwhpeak` int(1) DEFAULT '0',
+  `peaktariff` varchar(12) DEFAULT '',
+  `contractkwhpeak` double(16,2) DEFAULT '0.00',
+  `invto` varchar(10) DEFAULT 'Door',
+  `loclat` varchar(40) DEFAULT NULL,
+  `loclong` varchar(40) DEFAULT NULL,
+  `locroute` varchar(10) NOT NULL DEFAULT '',
+  `branchcode` varchar(20) DEFAULT '',
+  `unit` varchar(10) NOT NULL DEFAULT '',
+  PRIMARY KEY (`uniq`),
+  UNIQUE KEY `id` (`uniq`),
+  UNIQUE KEY `what` (`portal`,`account`),
+  KEY `portal` (`portal`) USING BTREE,
+  KEY `account` (`account`) USING BTREE,
+  KEY `state` (`state`),
+  CONSTRAINT `customers_ibfk_1` FOREIGN KEY (`state`) REFERENCES `state` (`state`)
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customers`
+--
+
+LOCK TABLES `customers` WRITE;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `localreports`
 --
 
@@ -119,7 +238,7 @@ CREATE TABLE `people` (
 
 LOCK TABLES `people` WRITE;
 /*!40000 ALTER TABLE `people` DISABLE KEYS */;
-INSERT INTO `people` VALUES (1,'Mike','1234',99,'Mike Harrison',NULL,0,0.00,0.00,'\0',NULL,NULL,'0000-00-00','2014-11-17 17:10:11','2014-11-17 15:04:19','');
+INSERT INTO `people` (`uniq`, `login`, `passwd`, `level`, `name`, `content`, `integer`, `double`, `decimal`, `bit`, `point`, `polygon`, `dateexample`, `created`, `lastmod`, `email`) VALUES (1,'Mike','1234',100,'Mike Harrison','random content random content more random content mo random content',0,0.00,0.00,'ÿ','','','0000-00-00','2014-11-17 17:10:11','2014-11-24 20:12:47','mike@geeklabs.com');
 /*!40000 ALTER TABLE `people` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -221,8 +340,35 @@ CREATE TABLE `reports` (
 
 LOCK TABLES `reports` WRITE;
 /*!40000 ALTER TABLE `reports` DISABLE KEYS */;
-INSERT INTO `reports` VALUES (10,'lookup','FirstReport','People Report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0000,0,'2014-11-17','2014-11-17 16:12:14'),(30,'lookup','allpeople','allpeople report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0058,66,'2014-11-17','2014-11-17 21:08:43');
+INSERT INTO `reports` (`uniq`, `itemgroup`, `itemid`, `itemname`, `itemdesc`, `seclevel`, `availtologins`, `availtoroles`, `query`, `query2`, `groupon`, `asnumbers`, `totals`, `input1field`, `input1source`, `input2field`, `input2source`, `input3field`, `input3source`, `input4field`, `input4source`, `input5field`, `input5source`, `input6field`, `input6source`, `input7field`, `input7source`, `input8field`, `input8source`, `input9field`, `input9source`, `output`, `outputformats`, `outputmode`, `groupchart`, `totalchart`, `mapchart`, `displaynotes`, `comments`, `defaultdatemode`, `fieldcharlimit`, `maxtime`, `counter`, `created`, `lastmod`) VALUES (10,'lookup','FirstReport','People Report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0000,0,'2014-11-17','2014-11-17 16:12:14'),(30,'lookup','allpeople','allpeople report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0058,69,'2014-11-17','2014-11-18 14:38:03');
 /*!40000 ALTER TABLE `reports` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `state`
+--
+
+DROP TABLE IF EXISTS `state`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `state` (
+  `uniq` int(10) NOT NULL AUTO_INCREMENT,
+  `state` varchar(20) DEFAULT NULL,
+  `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`uniq`),
+  UNIQUE KEY `id` (`uniq`),
+  UNIQUE KEY `state` (`state`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `state`
+--
+
+LOCK TABLES `state` WRITE;
+/*!40000 ALTER TABLE `state` DISABLE KEYS */;
+INSERT INTO `state` (`uniq`, `state`, `lastmod`) VALUES (23,'Confusion','2012-02-17 20:47:19'),(24,'Emergency','2013-03-04 22:07:31'),(25,'Art','2013-03-04 22:08:39'),(26,'Mind','2013-03-04 22:08:57'),(27,'California','2013-03-04 22:09:32'),(28,'Tennessee','2013-03-04 22:09:40'),(29,'New York','2013-03-04 22:09:50');
+/*!40000 ALTER TABLE `state` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -234,4 +380,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-11-17 13:11:03
+-- Dump completed on 2014-11-29 14:16:01

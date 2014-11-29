@@ -1,0 +1,13 @@
+body {
+  font-family: sans-serif;
+  font-size: 16px;
+  font-size: 1rem;
+  line-height: 21px;
+  line-height: 1.3125rem;
+  color: #000000;
+  background-color: #fff;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+
