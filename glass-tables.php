@@ -144,6 +144,8 @@ function gltableedit($table, $uniq, $editmode, $horvert,$options) {
     } else {
     print "<td><A HREF='glass.php?mode=tables&submode=add&table=$table' class=button style='font-size:large;'>New</A></td>" ; 
     } ; 
+    print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>" ; 
+
     print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>" ; 
     print "</table>" ; 
 
@@ -189,9 +191,12 @@ function gltableedit($table, $uniq, $editmode, $horvert,$options) {
    # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
    # print gltable(gaaafm("$q")) ; 
    # print_r(gaaafm("$q")) ; 
+
+        $strip = array('/zadd\_/') ;
+        $realtable = preg_replace($strip, '', $table) ;
    
    list($column,$constraint,$reftable,$refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-   where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'") ; 
+   where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'") ; 
    
 
             if($key == 'uniq') { #The master key, not editable. 
