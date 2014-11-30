@@ -7,7 +7,7 @@ function gltables() {
     <INPUT TYPE='hidden' NAME='submode' VALUE='runsqlinsanity'>
     <textarea name='query' rows=3 cols=150></textarea>
     <br>
-    <input name=action type=submit value='Run SQL'></form>\n";
+    <input name=action type=submit value='Run SQL' class=button></form>\n";
     #ini_set('display_errors', 1);
     #  ini_set('display_startup_errors',1);
     #error_reporting(-1);
@@ -16,6 +16,16 @@ function gltables() {
     };
     if ($submode == 'browse') {
         gltablebrowse(dt($_REQUEST['table']), dt($_REQUEST['start']), dt($_REQUEST['records']), dt($_REQUEST['sortby']));
+    };
+    if ($submode == 'add') {
+        $table = dt($_REQUEST['table']) ; 
+        $temptable = "zadd_$table" ; 
+        $q = "create temporary table zadd_$table like $table" ; 
+        runsql("$q") ; 
+        runsql("insert into $temptable (uniq) values ('1')") ; 
+        print gltable(gaaafm("select * from $temptable")) ; 
+        gltableedit($temptable,'1','edit', 'vert','zadd' );
+    
     };
     if ($submode == 'edit') {
         gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']),'edit', 'vert','select account,name from customers where uniq = 2' );
@@ -38,8 +48,19 @@ function gltables() {
 };
 
 
-function gltableedit($table, $uniq, $editmode, $horvert,$query) {
+function gltableedit($table, $uniq, $editmode, $horvert,$options) {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
+    if($subsubsubmode == 'zadd') {
+        $strip = array('/zadd\_/') ;
+        $table = preg_replace($strip, '', $table) ;
+        #print "New table name: $table <br>" ; 
+        $query = "insert into $table (uniq) values ('')" ; 
+        $result = $db->query($query) or die("Insert failed, probably duplicating an existing record");
+        $uniq = mysqli_insert_id($db) ; 
+        #print "Table: $table Uniq: $uniq" ; 
+        if($uniq < 1) { print "Error inserting record" ; return ; } ; 
+        $subsubmode = 'save' ; 
+    } ; 
 
     if($subsubmode == 'save') {
         while (list($key, $val) = each($_REQUEST)) {
@@ -74,7 +95,15 @@ function gltableedit($table, $uniq, $editmode, $horvert,$query) {
                     #$val = ereg_replace("'", "&apos;", $val);
                     $replace = array('/&#39;/','/&apos;/');
                     $val = preg_replace($replace, '\'', $val);
-                    $q = "update $table set `$j[2]` = '$val' where uniq = '$j[1]'";
+                    if($subsubsubmode == 'zadd') { 
+                        if($j[2] == 'uniq') { 
+                        $q = "select now() " ; 
+                        } else {
+                        $q = "UPDATE $table set `$j[2]` = '$val' where uniq = '$uniq'";
+                        } ; 
+                    } else {
+                        $q = "update $table set `$j[2]` = '$val' where uniq = '$j[1]'";
+                    } ; 
                 };
                 #print "<pre>$q</pre>" ; 
                 $f = mysqli_query($db,$q) or die("Query failed : <p>$q<p>" . mysqli_error());
@@ -88,29 +117,13 @@ function gltableedit($table, $uniq, $editmode, $horvert,$query) {
 
 } ; 
 
-
-#*************************** 5. row ***************************
-#           CONSTRAINT_CATALOG: def
-#            CONSTRAINT_SCHEMA: glass
-#              CONSTRAINT_NAME: customers_ibfk_1
-#                TABLE_CATALOG: def
-#                 TABLE_SCHEMA: glass
-#                   TABLE_NAME: customers
-#                  COLUMN_NAME: state
-#             ORDINAL_POSITION: 1
-#POSITION_IN_UNIQUE_CONSTRAINT: 1
-#      REFERENCED_TABLE_SCHEMA: glass
-#        REFERENCED_TABLE_NAME: state
-#       REFERENCED_COLUMN_NAME: state
-#5 rows in set (0.02 sec)
-include("settings.inc") ; 
+    include("settings.inc") ; 
 
    # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
    # print gltable(gaaafm("$q")) ; 
    # print_r(gaaafm("$q")) ; 
 
     $query = "select * from $table where uniq = '$uniq'" ;
- #   $query = "select * from $table" ;
 
     print "<pre>$query</pre>" ;    
 
@@ -120,8 +133,19 @@ include("settings.inc") ;
     print "<input type=hidden name=subsubmode value='save'>" ; 
     print "<input type=hidden name=table value='$table'>" ; 
     print "<input type=hidden name=uniq value='$uniq'>" ; 
+    
+    if($options == 'zadd') { 
+        print "<input type=hidden name=subsubsubmode value='zadd'>ZADDMODE" ; 
+    } ; 
 
-    print "<input type=submit name=action value='Save'><p>" ; 
+    print "<table cellpadding=0 cellspacing=0 style='margin:0px;padding:0px;'>" ;     
+
+    if($subsubsubmode == 'zadd') { 
+    } else {
+    print "<td><A HREF='glass.php?mode=tables&submode=add&table=$table' class=button style='font-size:large;'>New</A></td>" ; 
+    } ; 
+    print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>" ; 
+    print "</table>" ; 
 
     print "<table>" ; 
     #If "hor" creates a title bar
@@ -166,7 +190,7 @@ include("settings.inc") ;
    # print gltable(gaaafm("$q")) ; 
    # print_r(gaaafm("$q")) ; 
    
-   list($reftable,$refcolumn) = gafm("select REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+   list($column,$constraint,$reftable,$refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
    where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'") ; 
    
 
@@ -187,6 +211,9 @@ include("settings.inc") ;
                 };
             print "</optgroup></select>\n";
             print "</td>" ; 
+            } elseif ( "$column" == "$constraint" and "$column" == "$key") { #Things with constraints
+                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;'></td>" ;         
+
 
             } elseif ($type == '252' and $horvert == 'vert') { #text
                 print "<td><textarea name=\"f.$uniq.$key\" rows=4 cols='80' placeholder=''>$val</textarea></td>" ;         
