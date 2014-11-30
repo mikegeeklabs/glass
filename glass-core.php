@@ -216,8 +216,6 @@ function glauth() {
         #now we have a chicken and egg problem
     } else {
       list($login,$name,$level) = gafm("select login,name,level from people where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
-      #where should verify some cookies here as well.           
-    
         if (empty($_COOKIE['a'])) {
             header("WWW-Authenticate: Basic realm=\"Credentials Please 4\"");
             header('HTTP/1.0 401 Unauthorized');

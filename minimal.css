@@ -25,31 +25,3 @@ body {
 .button:active {
   top: 1px;
 }
-table {
-  margin: 1em 0;
-  table-layout: fixed;
-  border-collapse: collapse;
-  border-spacing: 0;
-  border-right: 1px solid #f1f1f1;
-  border-bottom: 1px solid #f1f1f1;
-}
-table th,
-table td {
-  padding: 8px;
-  text-align: left;
-  vertical-align: top;
-  border-top: 1px solid #eee;
-  border-left: 1px solid #eee;
-}
-table thead th,
-table tfoot th {
-  vertical-align: bottom;
-  background-color: #f1f1f1;
-  color: #333;
-}
-table caption {
-  padding: 8px;
-  font-weight: normal;
-  font-style: normal;
-  border-bottom: 0;
-}

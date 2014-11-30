@@ -5,8 +5,11 @@ function reports() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate  ;
     include_once ('glass-core.php'); #redundant, but this can be initiated by CLI or other means.
     $db = glconnect();
-    #    $seclevel = glauth(); #might also be redundant. Still playing
+ ##   list($login,$name,$level,$perms) = glauth() ;  
+
     $seclevel = $level; #need to f&r seclevel ?
+
+    print "Level: $login $level" ; 
     if ($level < 5) {
         print "Not for you";
         die;

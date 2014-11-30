@@ -18,17 +18,19 @@ function gltables() {
         gltablebrowse(dt($_REQUEST['table']), dt($_REQUEST['start']), dt($_REQUEST['records']), dt($_REQUEST['sortby']));
     };
     if ($submode == 'add') {
-        $table = dt($_REQUEST['table']) ; 
-        $temptable = "zadd_$table" ; 
-        $q = "create temporary table zadd_$table like $table" ; 
-        runsql("$q") ; 
-        runsql("insert into $temptable (uniq) values ('1')") ; 
-        print gltable(gaaafm("select * from $temptable")) ; 
-        gltableedit($temptable,'1','edit', 'vert','zadd' );
-    
+        $table = dt($_REQUEST['table']);
+        $temptable = "zadd_$table";
+        $q = "create temporary table zadd_$table like $table";
+        runsql("$q");
+        runsql("insert into $temptable (uniq) values ('1')");
+        print gltable(gaaafm("select * from $temptable"));
+        gltableedit($temptable, '1', 'edit', 'vert', 'zadd');
+    };
+    if ($submode == 'search') {
+        gltablesearch();
     };
     if ($submode == 'edit') {
-        gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']),'edit', 'vert','select account,name from customers where uniq = 2' );
+        gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']), 'edit', 'vert', '');
     };
     if ($submode == 'runsqlinsanity') {
         # this should not be allowed
@@ -46,44 +48,141 @@ function gltables() {
         };
     };
 };
-
-
-function gltableedit($table, $uniq, $editmode, $horvert,$options) {
+function gltablesearch() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-    if($subsubsubmode == 'zadd') {
-        $strip = array('/zadd\_/') ;
-        $table = preg_replace($strip, '', $table) ;
-        #print "New table name: $table <br>" ; 
-        $query = "insert into $table (uniq) values ('')" ; 
-        $result = $db->query($query) or die("Insert failed, probably duplicating an existing record");
-        $uniq = mysqli_insert_id($db) ; 
-        #print "Table: $table Uniq: $uniq" ; 
-        if($uniq < 1) { print "Error inserting record" ; return ; } ; 
-        $subsubmode = 'save' ; 
-    } ; 
+    $table = dt($_REQUEST['table']);
+    if ($subsubmode == '' or $subsubmode == 'form') {
+    include ("settings.inc");
+    # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
+    # print gltable(gaaafm("$q")) ;
+    # print_r(gaaafm("$q")) ;
+    $query = "select * from $table limit 1";
+    print "<pre>$query</pre>";
+    print "<form>";
+    print "<input type=hidden name=mode value='tables'>";
+    print "<input type=hidden name=submode value='search'>";
+    print "<input type=hidden name=subsubmode value='search'>";
+    print "<input type=hidden name=table value='$table'>";
+    print "<table cellpadding=0 cellspacing=0 style='margin:0px;padding:0px;'>";
+    print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>";
+    print "<td><input type=submit name=action value='Search' class=button style='font-size:large;'></td>";
+    print "</table>";
+    print "<table>";
+    #If "hor" creates a title bar
+    $horvert = 'vert' ; #might enable both modes later. 
+    if ($horvert == 'hor') {
+        $h = 0;
+        $result = mysqli_query($db, $query) or die("Query failed : $query <p>" . mysqli_error());
+        while ($row = mysqli_fetch_assoc($result) and $h < 1) {
+            print "<tr>";
+            while (list($key, $val) = each($row)) {
+                print "<td>$key</td>";
+            };
+            print "</tr>";
+            $h++;
+        };
+    };
+    #end title bar
+    $result = mysqli_query($db, $query) or die("Query failed : $query <p>" . mysqli_error());
+    #    $finfo = mysqli_fetch_field_direct($result,1) ;
+    $finfo = mysqli_fetch_fields($result);
+    #    glprintr($finfo) ;
+    $c = 0;
+    while ($row = mysqli_fetch_assoc($result)) {
+        if ($horvert == 'hor') {
+            print "<tr>";
+        };
+        while (list($key, $val) = each($row)) {
+            #-------------------------------------------------------
+            if ($key == 'uniq') {
+                $uniq = $val;
+            };
+            if ($horvert == 'vert') {
+                print "<tr><td>$key</td>";
+            };
+            $length = $finfo[$c]->length;
+            $type = $finfo[$c]->type;
+            $decimal = $finfo[$c]->decimal;
+            # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
+            # print gltable(gaaafm("$q")) ;
+            # print_r(gaaafm("$q")) ;
+            $strip = array('/zadd\_/');
+            $realtable = preg_replace($strip, '', $table);
+            list($column, $constraint, $reftable, $refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'");
+                
+                
+            print "<td><input type=text name=\"f.$key\" value=\"\" placeholder='$key $type/$length' size='30'></td>";
+            
+            
+            $c++;
+            if ($horvert == 'vert') {
+                print "</tr>";
+            };
+            #-------------------------------------------------------
+            
+        };
+        if ($horvert == 'hor') {
+            print "</tr>";
+        };
+    };
+    print "</table>";
+    print "</form>";
+    }
+    if ($subsubmode == 'search') {
+    print "Searching" ; 
+#    glprintr($_REQUEST) ;     
+        while (list($key, $val) = each($_REQUEST)) {
+            if (substr($key, 0, 2) == "f_" and !empty($val)) {
+                        $strip = array('/f\_/');
+                        $key = preg_replace($strip, '', $key);
 
-    if($subsubmode == 'save') {
+                $select .= "`$key` like '%$val%' " ;             
+            } ; 
+        } ; 
+        $query = "select * from `$table` where $select" ; 
+        print "<p>$query</p>" ; 
+        gltableedit(dt($table),'', 'edit', 'hor', "$query");
+        
+    }
+};
+function gltableedit($table, $uniq, $editmode, $horvert, $options) {
+    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
+    if ($subsubsubmode == 'zadd') {
+        $strip = array('/zadd\_/');
+        $table = preg_replace($strip, '', $table);
+        #print "New table name: $table <br>" ;
+        $query = "insert into $table (uniq) values ('')";
+        $result = $db->query($query) or die("Insert failed, probably duplicating an existing record");
+        $uniq = mysqli_insert_id($db);
+        #print "Table: $table Uniq: $uniq" ;
+        if ($uniq < 1) {
+            print "Error inserting record";
+            return;
+        };
+        $subsubmode = 'save';
+    };
+    if ($subsubmode == 'save') {
         while (list($key, $val) = each($_REQUEST)) {
             if (substr($key, 0, 3) == "fa_") {
                 #print "Saving: $val <BR>" ;
-                $itemstring .= "$val|";
+                $itemstring.= "$val|";
                 if ($val == 'CLEAR') {
                     $itemstring = '|';
                 };
             };
-
             if (substr($key, 0, 2) == "f_") {
-               # $j = split("[\_]", $key);
-                $j = preg_split('/\_/',$key) ;                 
-                if($j[3] != '' or $j[4] != '') {
-                    $j[2] .= '_' . $j[3] ; #Allows field names with space ; 
-                } ; 
-                if($j[4] != '') {
-                    $j[2] .= '_' . $j[4] ; 
-                } ; 
-                if($j[5] != '') {
-                    $j[2] .= '_' . $j[5] ; 
-                } ; 
+                # $j = split("[\_]", $key);
+                $j = preg_split('/\_/', $key);
+                if ($j[3] != '' or $j[4] != '') {
+                    $j[2].= '_' . $j[3]; #Allows field names with space ;
+                    
+                };
+                if ($j[4] != '') {
+                    $j[2].= '_' . $j[4];
+                };
+                if ($j[5] != '') {
+                    $j[2].= '_' . $j[5];
+                };
                 if (is_array($val)) { #Saves ARRAY Data, concats string
                     $vv = "";
                     foreach($val as $v) {
@@ -93,168 +192,147 @@ function gltableedit($table, $uniq, $editmode, $horvert,$options) {
                 } else { #normal text save
                     $val = stripslashes($val);
                     #$val = ereg_replace("'", "&apos;", $val);
-                    $replace = array('/&#39;/','/&apos;/');
+                    $replace = array('/&#39;/', '/&apos;/');
                     $val = preg_replace($replace, '\'', $val);
-                    if($subsubsubmode == 'zadd') { 
-                        if($j[2] == 'uniq') { 
-                        $q = "select now() " ; 
+                    if ($subsubsubmode == 'zadd') {
+                        if ($j[2] == 'uniq') {
+                            $q = "select now() ";
                         } else {
-                        $q = "UPDATE $table set `$j[2]` = '$val' where uniq = '$uniq'";
-                        } ; 
+                            $q = "UPDATE $table set `$j[2]` = '$val' where uniq = '$uniq'";
+                        };
                     } else {
                         $q = "update $table set `$j[2]` = '$val' where uniq = '$j[1]'";
-                    } ; 
+                    };
                 };
-                #print "<pre>$q</pre>" ; 
-                $f = mysqli_query($db,$q) or die("Query failed : <p>$q<p>" . mysqli_error());
+                #print "<pre>$q</pre>" ;
+                $f = mysqli_query($db, $q) or die("Query failed : <p>$q<p>" . mysqli_error());
                 $start = $j[1];
             };
         };
-        if ($itemstring != '') {  # used for fa_ items that create a Ghetto Normalized Data Set. 
+        if ($itemstring != '') { # used for fa_ items that create a Ghetto Normalized Data Set.
             $query = "update $_REQUEST[sourcetable] set $_REQUEST[sourcefield] = '$itemstring' where uniq = '$_REQUEST[sourceuniq]' and portal = '$portal'";
-            $result = mysqli_query($db,$query) or die("Query failed : " . mysqli_error());
+            $result = mysqli_query($db, $query) or die("Query failed : " . mysqli_error());
         };
-
-} ; 
-
-    include("settings.inc") ; 
-
-   # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
-   # print gltable(gaaafm("$q")) ; 
-   # print_r(gaaafm("$q")) ; 
-
-    $query = "select * from $table where uniq = '$uniq'" ;
-
-    print "<pre>$query</pre>" ;    
-
-    print "<form>" ; 
-    print "<input type=hidden name=mode value='tables'>" ; 
-    print "<input type=hidden name=submode value='edit'>" ; 
-    print "<input type=hidden name=subsubmode value='save'>" ; 
-    print "<input type=hidden name=table value='$table'>" ; 
-    print "<input type=hidden name=uniq value='$uniq'>" ; 
+    };
+    include ("settings.inc");
+    # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
+    # print gltable(gaaafm("$q")) ;
+    # print_r(gaaafm("$q")) ;
     
-    if($options == 'zadd') { 
-        print "<input type=hidden name=subsubsubmode value='zadd'>ZADDMODE" ; 
-    } ; 
-
-    print "<table cellpadding=0 cellspacing=0 style='margin:0px;padding:0px;'>" ;     
-
-    if($subsubsubmode == 'zadd') { 
+    #QUERY LOGIC
+    if(strlen($options) > 10) { 
+        $query = $options ; 
     } else {
-    print "<td><A HREF='glass.php?mode=tables&submode=add&table=$table' class=button style='font-size:large;'>New</A></td>" ; 
-    } ; 
-    print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>" ; 
-
-    print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>" ; 
-    print "</table>" ; 
-
-    print "<table>" ; 
+        $query = "SELECT * from $table where uniq = '$uniq'";
+    } ;     
+    print "<pre>$query</pre>";
+    print "<form>";
+    print "<input type=hidden name=mode value='tables'>";
+    print "<input type=hidden name=submode value='edit'>";
+    print "<input type=hidden name=subsubmode value='save'>";
+    print "<input type=hidden name=table value='$table'>";
+    print "<input type=hidden name=uniq value='$uniq'>";
+    if ($options == 'zadd') {
+        print "<input type=hidden name=subsubsubmode value='zadd'>ZADDMODE";
+    };
+    print "<table cellpadding=0 cellspacing=0 style='margin:0px;padding:0px;'>";
+    if ($subsubsubmode == 'zadd') {
+    } else {
+        print "<td><A HREF='glass.php?mode=tables&submode=add&table=$table' class=button style='font-size:large;'>New</A></td>";
+    };
+    print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>";
+    print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>";
+    print "</table>";
+    print "<table>";
     #If "hor" creates a title bar
-    if($horvert == 'hor') { 
-        $h = 0 ; 
-        $result = mysqli_query($db,$query) or die("Query failed : $query <p>" . mysqli_error());
+    if ($horvert == 'hor') {
+        $h = 0;
+        $result = mysqli_query($db, $query) or die("Query failed : $query <p>" . mysqli_error());
         while ($row = mysqli_fetch_assoc($result) and $h < 1) {
-            print "<tr>" ; 
+            print "<tr>";
             while (list($key, $val) = each($row)) {
-                 print "<td>$key</td>" ;                
-            } ; 
-            print "</tr>" ; 
-            $h++ ; 
-        } ; 
-    } ; 
+                print "<td>$key</td>";
+            };
+            print "</tr>";
+            $h++;
+        };
+    };
     #end title bar
-    
-
-    $result = mysqli_query($db,$query) or die("Query failed : $query <p>" . mysqli_error());
-
-#    $finfo = mysqli_fetch_field_direct($result,1) ; 
-    $finfo = mysqli_fetch_fields($result) ; 
-
-#    glprintr($finfo) ; 
-    
-    $c = 0 ; 
+    $result = mysqli_query($db, $query) or die("Query failed : $query <p>" . mysqli_error());
+    #    $finfo = mysqli_fetch_field_direct($result,1) ;
+    $finfo = mysqli_fetch_fields($result);
+    #    glprintr($finfo) ;
+    $c = 0;
     while ($row = mysqli_fetch_assoc($result)) {
-
-        if($horvert == 'hor') { print "<tr>" ; } ; 
-
+        if ($horvert == 'hor') {
+            print "<tr>";
+        };
         while (list($key, $val) = each($row)) {
-#-------------------------------------------------------        
-        if($key == 'uniq') { $uniq = $val ; } ; 
-
-
-        if($horvert == 'vert') { print "<tr><td>$key</td>" ; } ; 
-            $length = $finfo[$c]->length ; 
-            $type = $finfo[$c]->type ; 
-            $decimal = $finfo[$c]->decimal ; 
-
-   # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ; 
-   # print gltable(gaaafm("$q")) ; 
-   # print_r(gaaafm("$q")) ; 
-
-        $strip = array('/zadd\_/') ;
-        $realtable = preg_replace($strip, '', $table) ;
-   
-   list($column,$constraint,$reftable,$refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-   where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'") ; 
-   
-
-            if($key == 'uniq') { #The master key, not editable. 
-                print "<td><input name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>" ;
-                         
-            } elseif (!empty($reftable) and !empty($refcolumn)) { 
-            
-            print "<td>" ; 
-            print "<select name=\"f.$uniq.$key\">" ; 
-            print "<optgroup label='" . bbf('Current') ."'>";
-            print "<OPTION VALUE='$val'>$val";
-            print "<optgroup label='" . bbf('Available') ."'>";
-            $q = "select distinct($refcolumn) from $reftable order by $refcolumn";
-            $r = mysqli_query($db,$q) or die("Query failed : " . mysql_error());
+            #-------------------------------------------------------
+            if ($key == 'uniq') {
+                $uniq = $val;
+            };
+            if ($horvert == 'vert') {
+                print "<tr><td>$key</td>";
+            };
+            $length = $finfo[$c]->length;
+            $type = $finfo[$c]->type;
+            $decimal = $finfo[$c]->decimal;
+            # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
+            # print gltable(gaaafm("$q")) ;
+            # print_r(gaaafm("$q")) ;
+            $strip = array('/zadd\_/');
+            $realtable = preg_replace($strip, '', $table);
+            list($column, $constraint, $reftable, $refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+   where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'");
+            if ($key == 'uniq') { #The master key, not editable.
+                print "<td><A HREF='glass.php?mode=tables&submode=edit&table=$table&uniq=$val'>$val</A><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>";
+            } elseif (!empty($reftable) and !empty($refcolumn)) {
+                print "<td>";
+                print "<select name=\"f.$uniq.$key\">";
+                print "<optgroup label='" . bbf('Current') . "'>";
+                print "<OPTION VALUE='$val'>$val";
+                print "<optgroup label='" . bbf('Available') . "'>";
+                $q = "select distinct($refcolumn) from $reftable order by $refcolumn";
+                $r = mysqli_query($db, $q) or die("Query failed : " . mysql_error());
                 while (list($d) = mysqli_fetch_row($r)) {
                     print "<OPTION VALUE='$d'>$d";
                 };
-            print "</optgroup></select>\n";
-            print "</td>" ; 
-            } elseif ( "$column" == "$constraint" and "$column" == "$key") { #Things with constraints
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;'></td>" ;         
-
-
+                print "</optgroup></select>\n";
+                print "</td>";
+            } elseif ("$column" == "$constraint" and "$column" == "$key") { #Things with constraints
+                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;'></td>";
             } elseif ($type == '252' and $horvert == 'vert') { #text
-                print "<td><textarea name=\"f.$uniq.$key\" rows=4 cols='80' placeholder=''>$val</textarea></td>" ;         
+                print "<td><textarea name=\"f.$uniq.$key\" rows=4 cols='80' placeholder=''>$val</textarea></td>";
             } elseif ($type == '252' and $horvert == 'hor') { #text
-                print "<td><textarea name=\"f.$uniq.$key\" rows=1 cols='20' placeholder='$key'>$val</textarea></td>" ;         
+                print "<td><textarea name=\"f.$uniq.$key\" rows=1 cols='20' placeholder='$key'>$val</textarea></td>";
             } elseif ($type == '7') { #DATE-TIMESTAMP
-                print "<td><input type=datetime name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>" ;         
+                print "<td><input type=datetime name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>";
             } elseif ($type == '10') { #DATE
-                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>" ;         
+                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>";
             } elseif ($type == '16') { #BIT
-                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" style='font-family:fixed,courier;'></td>" ;         
+                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" style='font-family:fixed,courier;'></td>";
             } elseif ($key == 'email' and $type == '253') { #DATE
-                print "<td><input type=email name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='e-mail'></td>" ;         
-
-            } elseif ($type == '2' or $type == '3' or $type == '4' or $type == '5' or $type == '8' or $type == '9' or $type == '246' ) { #NUMBERS
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='text-align:right;'></td>" ;         
-
+                print "<td><input type=email name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='e-mail'></td>";
+            } elseif ($type == '2' or $type == '3' or $type == '4' or $type == '5' or $type == '8' or $type == '9' or $type == '246') { #NUMBERS
+                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='text-align:right;'></td>";
             } else {
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='$key $type/$length' size='$length'></td>" ;         
-            } ;
+                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='$key $type/$length' size='$length'></td>";
+            };
+            $c++;
+            if ($horvert == 'vert') {
+                print "</tr>";
+            };
+            #-------------------------------------------------------
             
-
-            $c++ ; 
-        if($horvert == 'vert') { print "</tr>" ; } ; 
-        
-#-------------------------------------------------------    
-        } ; 
-        if($horvert == 'hor') { print "</tr>" ; } ; 
-    } ; 
-    print "</table>" ; 
-    print "</form>" ; 
-
-
-
-} ; 
-
+        };
+        if ($horvert == 'hor') {
+            print "</tr>";
+        };
+    };
+    print "</table>";
+    print "</form>";
+};
 function gltablebrowse($table, $start, $records, $sortby) {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     $records = '10';

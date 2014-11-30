@@ -84,6 +84,7 @@ EOF;
 
  #This is a little awkward, but makes it easier to to run the report engine isolated. 
  if($mode == 'reports' or $mode == 'item' or $mode == 'run' or $mode == 'export') {
+  print "Level: $level <br>" ; 
   include_once("glass-reportengine.php") ; 
   reports() ;   
  } ;
