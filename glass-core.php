@@ -63,6 +63,21 @@ function gaaafm($query) {
    return array() ;  
   } ; 
 };
+function glafm($query) { 
+  //Get List  Array from MySQL
+  global $db;
+  if (!$db || empty($db)) { $db = glconnect(); } ; 
+  $a = array() ; //declare the array
+  $result = $db->query($query) or die("gaaafm failed:<br>\n$query<br>\n" . $db->connect_errno . " : " . $db->connect_error . "<br>\n");
+  if(is_object($result)) {
+   $result->data_seek(0);
+   $i = 0 ; 
+   while ($row = mysqli_fetch_array($result,MYSQLI_NUM)) { array_push($a,$row[0]) ; } ; 
+   return $a;
+  } else { 
+   return array() ;  
+  } ; 
+};
 
 function runsql($query) { 
   global $db;
@@ -77,6 +92,18 @@ function glist($a) {
     } ; 
   } ;   
 } ; 
+
+function glisttable($a) {
+  $stuff = "<table>\n" ;   
+  foreach($a as $k=>$v) { 
+    foreach($v as $key=>$val) {
+      $stuff .= "<tr><td>$key</td><td>$val</td></tr>\n" ; 
+    } ; 
+  } ;   
+  $stuff .= "</table>\n" ; 
+  return $stuff ; 
+} ; 
+
 function glprintr($thing) { 
  print "<pre>" . print_r($thing,1) . "</pre>" ; 
 } ; 
@@ -184,19 +211,23 @@ function glauth() {
     $level = 0 ; 
     $name = '' ; 
     $perms = array() ; 
+#    if($_REQUEST['mode'] == 'unperson') {     
+#            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=$script?\">";
+#           return array('guest','guest',10,$perms);
+#    } ;     
 #    if (!isset($_SERVER['PHP_AUTH_USER']) or (isset($_SERVER['PHP_AUTH_USER']) and $_COOKIE['a'] == '')) {
     if (!isset($_SERVER['PHP_AUTH_USER'])) {
-        header("WWW-Authenticate: Basic realm=\"Credentials Please 1\"");
+        header("WWW-Authenticate: Basic realm=\"Credentials Please (1)\"");
         header('HTTP/1.0 401 Unauthorized');
         print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=$script?\">";
         exit ; 
     } elseif (isset($_SERVER['PHP_AUTH_USER']) and empty($_COOKIE['a']) and $_REQUEST['mode'] == 'logout') {         
-        header("WWW-Authenticate: Basic realm=\"Credentials Please 3\"");
+        header("WWW-Authenticate: Basic realm=\"Credentials or click OK then Escape\"");
         header('HTTP/1.0 401 Unauthorized');
         print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=$script?\">";
         exit ; 
     } elseif (isset($_SERVER['PHP_AUTH_USER']) and empty($_COOKIE['a']) and $_REQUEST['mode'] == 'login') {         
-      list($login,$name,$level) = gafm("select login,name,level from people where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
+      list($login,$name,$level) = gafm("select login,name,level from users where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
         if ($level > 0) {
             if(empty($_COOKIE['a'])) {
                 $fromip = $_SERVER['REMOTE_ADDR'];
@@ -208,25 +239,26 @@ function glauth() {
              } ;             
         };
         if ($level < 1) {
-            header("WWW-Authenticate: Basic realm=\"Credentials Please 2\"");
+            header("WWW-Authenticate: Basic realm=\"Credentials Please (2)\"");
             header('HTTP/1.0 401 Unauthorized');
             print bbf('Error 401') . ' b<hr>' . bbf('You must have a valid login and password to access this system');
             exit;
         };
         #now we have a chicken and egg problem
     } else {
-      list($login,$name,$level) = gafm("select login,name,level from people where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
+      list($login,$name,$level) = gafm("select login,name,level from users where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
         if (empty($_COOKIE['a'])) {
-            header("WWW-Authenticate: Basic realm=\"Credentials Please 4\"");
+            header("WWW-Authenticate: Basic realm=\"Credentials or click OK then Escape\"");
             header('HTTP/1.0 401 Unauthorized');
             print bbf('Error 401') . ' c<hr>' . bbf('You must have a valid login and password to access this system');
-            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=$script?\">";
+            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=$script?mode=welcome\">";
             die ;
         };
        # print "RE-AUTH" ; 
     } ; 
-
-        $perms = array() ; 
+        if($level > 0) {
+         $perms = glafm("select perm from userperms where login = '$login'") ; 
+        } ; 
         return array($login,$name,$level,$perms);
     
 }; //end function glsimpleauth
@@ -293,12 +325,17 @@ function nff($number) {
 
 function gllog($log, $what) {
     global $portal, $login, $fromip ; 
+    $dir = @fopen("logs", "r");
+    if (!($dir)) {
+        mkdir("logs");
+    };
+    @fclose($dir);
     if ($log == '') {
-        $log = 'nolog';
+        $log = 'log';
     };
     $now1 = date("Ymd");
     $now2 = date("Ymd H:i:s");
-    $fileout = fopen("logs/$now1-$portal$login-$log", "a");
+    $fileout = fopen("logs/$now1-$portal$login-$log.log", "a");
     fputs($fileout, "$now2    $login    $fromip    $what\n");
     fclose($fileout);
 };

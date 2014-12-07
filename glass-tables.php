@@ -5,7 +5,7 @@ function gltables() {
     print "\n<form class='form-horizontal noprint' ACTION='glass.php' METHOD='get'>
     <INPUT TYPE='hidden' NAME='mode' VALUE='tables'>
     <INPUT TYPE='hidden' NAME='submode' VALUE='runsqlinsanity'>
-    <textarea name='query' rows=3 cols=150></textarea>
+    <textarea name='query' rows=3 cols=150>$_REQUEST[query]</textarea>
     <br>
     <input name=action type=submit value='Run SQL' class=button></form>\n";
     #ini_set('display_errors', 1);
@@ -15,19 +15,33 @@ function gltables() {
         gltablemenu();
     };
     if ($submode == 'browse') {
-        gltablebrowse(dt($_REQUEST['table']), dt($_REQUEST['start']), dt($_REQUEST['records']), dt($_REQUEST['sortby']));
+          #  gltablebrowse(dt($_REQUEST['table']), dt($_REQUEST['start']), dt($_REQUEST['records']), dt($_REQUEST['sortby']));
+            $uniq = dt($_REQUEST['uniq']);
+            $table = dt($_REQUEST['table']);
+            gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']), 'view', 'hor', "select * from `$table` limit 100");
+
     };
     if ($submode == 'add') {
-        $table = dt($_REQUEST['table']);
+            $uniq = dt($_REQUEST['uniq']);
+            $table = dt($_REQUEST['table']);
+    
         $temptable = "zadd_$table";
         $q = "create temporary table zadd_$table like $table";
         runsql("$q");
         runsql("insert into $temptable (uniq) values ('1')");
-        print gltable(gaaafm("select * from $temptable"));
+        #print gltable(gaaafm("select * from $temptable"));
         gltableedit($temptable, '1', 'edit', 'vert', 'zadd');
     };
     if ($submode == 'search') {
         gltablesearch();
+    };
+    if ($submode == 'delete') {
+        $uniq = dtnum($_REQUEST['uniq']) ; 
+        $table = dt($_REQUEST['table']) ; 
+        $d = gaafm("select * from `$table` where uniq = '$uniq'") ; 
+        gllog('DELETE',"deleting from $table\n" . print_r($d,1)) ; 
+        runsql("delete from `$table` where uniq = '$uniq'") ; 
+        gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']), 'edit', 'hor', "select * from `$table` where uniq > ($uniq - 5) and uniq < ($uniq + 5)");
     };
     if ($submode == 'edit') {
         gltableedit(dt($_REQUEST['table']), dt($_REQUEST['uniq']), 'edit', 'vert', '');
@@ -41,9 +55,9 @@ function gltables() {
         } else {
             if (strlen($q) > 4) {
                 print "Query: <pre><b>$q</b></pre>";
-                print gltable(gaaafm("$q"), array());
+                #print gltable(gaaafm("$q"), array());
                 #print gaaafm("$q") ;
-                
+                gltableedit('','', 'view', 'hor', "$q");
             };
         };
     };
@@ -76,7 +90,13 @@ function gltablesearch() {
         while ($row = mysqli_fetch_assoc($result) and $h < 1) {
             print "<tr>";
             while (list($key, $val) = each($row)) {
-                print "<td>$key</td>";
+                list($ztable,$field,$display,$description,$specialformat,$placeholder) = 
+                gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+                if(!empty($display)) {
+                    print "<td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                } else {
+                    print "<td style='text-align:right;'>$key</td>";
+                } ; 
             };
             print "</tr>";
             $h++;
@@ -98,7 +118,16 @@ function gltablesearch() {
                 $uniq = $val;
             };
             if ($horvert == 'vert') {
-                print "<tr><td>$key</td>";
+           #     print "<tr><td>$key</td>";
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+
+                if(!empty($display)) {
+                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                } else {
+                    print "<tr><td style='text-align:right;'>$key</td>";
+                } ; 
+
+
             };
             $length = $finfo[$c]->length;
             $type = $finfo[$c]->type;
@@ -139,6 +168,11 @@ function gltablesearch() {
                 $select .= "`$key` like '%$val%' " ;             
             } ; 
         } ; 
+        if(empty($select)) { 
+            $select = "uniq like '%' limit 10" ; 
+            print "Nothing was selected to search for" ; 
+        } ;     
+        
         $query = "select * from `$table` where $select" ; 
         print "<p>$query</p>" ; 
         gltableedit(dt($table),'', 'edit', 'hor', "$query");
@@ -215,17 +249,30 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
         };
     };
     include ("settings.inc");
-    # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
-    # print gltable(gaaafm("$q")) ;
-    # print_r(gaaafm("$q")) ;
-    
     #QUERY LOGIC
     if(strlen($options) > 10) { 
         $query = $options ; 
     } else {
         $query = "SELECT * from $table where uniq = '$uniq'";
     } ;     
+    if(empty($table)) { #try to guess the table
+        if(preg_match_all('/((from|join|update) `(.*)`)/', $query, $matches)) {
+            $tables = array_unique($matches[3]);
+            list($table) = preg_split("/[\s,]+/",$tables[0]);
+        }
+    } ; 
+    if(empty($table)) { #try to guess the table
+        if(preg_match_all('/((from|join|update) (.*))/', $query, $matches)) {
+            $tables = array_unique($matches[3]);
+            list($table) = preg_split("/[\s,]+/",$tables[0]);
+        }
+    } ; 
+
+
     print "<pre>$query</pre>";
+    
+    $tabledesc = gaafm("select * from gltabledesc where `table` = '$table'") ; 
+    #glprintr($tabledesc) ; 
     print "<form>";
     print "<input type=hidden name=mode value='tables'>";
     print "<input type=hidden name=submode value='edit'>";
@@ -233,25 +280,57 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
     print "<input type=hidden name=table value='$table'>";
     print "<input type=hidden name=uniq value='$uniq'>";
     if ($options == 'zadd') {
-        print "<input type=hidden name=subsubsubmode value='zadd'>ZADDMODE";
+        print "<input type=hidden name=subsubsubmode value='zadd'>";
     };
     print "<table cellpadding=0 cellspacing=0 style='margin:0px;padding:0px;'>";
-    if ($subsubsubmode == 'zadd') {
+
+    if(!empty($tabledesc[table]) ) {
+        print "<caption><span title='$tabledesc[description]'>$table / $tabledesc[display]</span></caption>" ; 
+        print "<tr><td>&nbsp;</td></tr>" ; //should be removed with better CSS. 
+    } ; 
+
+
+    if ($options == 'zadd') {
     } else {
+        if($horvert != 'hor') {
+        print "<td><A HREF='glass.php?mode=tables&submode=delete&table=$table&uniq=$uniq' class=button style='font-size:large;background:#ffdddd;'>Delete</A></td>";
+        } ; 
         print "<td><A HREF='glass.php?mode=tables&submode=add&table=$table' class=button style='font-size:large;'>New</A></td>";
     };
     print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>";
-    print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>";
+    print "<td><A HREF='glass.php?mode=tables&submode=search&table=$table' class=button style='font-size:large;'>Search</A></td>";
+
+    if($editmode == 'edit') {
+        print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>";
+    } else { 
+        $readonly = 'READONLY' ; 
+    } ; 
+    if(!empty($tabledesc[specialformat]) and $horvert == 'vert') {
+        $link = $tabledesc[specialformat] ; 
+        $strip = array('/\$uniq/');
+        $link = preg_replace($strip, "$uniq", $link);
+        print "<td><A HREF='$script?$link' class='button'>Manage</A>" ;     
+
+    } ;     
     print "</table>";
     print "<table>";
     #If "hor" creates a title bar
+    
     if ($horvert == 'hor') {
         $h = 0;
         $result = mysqli_query($db, $query) or die("Query failed : $query <p>" . mysqli_error());
         while ($row = mysqli_fetch_assoc($result) and $h < 1) {
             print "<tr>";
             while (list($key, $val) = each($row)) {
-                print "<td>$key</td>";
+
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+
+                if(!empty($display)) {
+                    print "<td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                } else {
+                    print "<td style='text-align:right;'>$key</td>";
+                } ; 
+
             };
             print "</tr>";
             $h++;
@@ -262,36 +341,49 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
     #    $finfo = mysqli_fetch_field_direct($result,1) ;
     $finfo = mysqli_fetch_fields($result);
     #    glprintr($finfo) ;
-    $c = 0;
     while ($row = mysqli_fetch_assoc($result)) {
         if ($horvert == 'hor') {
             print "<tr>";
         };
+        $c = 0 ; 
         while (list($key, $val) = each($row)) {
             #-------------------------------------------------------
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+
             if ($key == 'uniq') {
                 $uniq = $val;
             };
             if ($horvert == 'vert') {
-                print "<tr><td>$key</td>";
+                if(!empty($display)) {
+                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                } else {
+                    print "<tr><td style='text-align:right;'>$key</td>";
+                } ; 
             };
-            $length = $finfo[$c]->length;
+
+            if ($horvert == 'hor') {
+             $length = 20 ; 
+            } else { 
+             $length = $finfo[$c]->length;
+            } ; 
+            
             $type = $finfo[$c]->type;
             $decimal = $finfo[$c]->decimal;
-            # $q = "select * from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$table' and CONSTRAINT_SCHEMA = '$database'" ;
-            # print gltable(gaaafm("$q")) ;
-            # print_r(gaaafm("$q")) ;
+            
             $strip = array('/zadd\_/');
             $realtable = preg_replace($strip, '', $table);
-            list($column, $constraint, $reftable, $refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
-   where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'");
-            if ($key == 'uniq') { #The master key, not editable.
-                print "<td><A HREF='glass.php?mode=tables&submode=edit&table=$table&uniq=$val'>$val</A><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>";
+            list($column, $constraint, $reftable, $refcolumn) = gafm("select COLUMN_NAME,CONSTRAINT_NAME,REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE where TABLE_NAME = '$realtable' and CONSTRAINT_SCHEMA = '$database' and COLUMN_NAME = '$key'");
+            if ($key == 'uniq' and $options == 'zadd') { #The master key, not editable.
+                print "<td><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY>---</td>";
+            } elseif ($key == 'uniq' and $options != 'zadd') {
+                print "<td><A id='$key' HREF='glass.php?mode=tables&submode=edit&table=$table&uniq=$val'>$val</A><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>";
             } elseif (!empty($reftable) and !empty($refcolumn)) {
                 print "<td>";
-                print "<select name=\"f.$uniq.$key\">";
+                print "<select id='$key' name=\"f.$uniq.$key\" REQUIRED $readonly>";
+                if(!empty($val)) {
                 print "<optgroup label='" . bbf('Current') . "'>";
                 print "<OPTION VALUE='$val'>$val";
+                } ; 
                 print "<optgroup label='" . bbf('Available') . "'>";
                 $q = "select distinct($refcolumn) from $reftable order by $refcolumn";
                 $r = mysqli_query($db, $q) or die("Query failed : " . mysql_error());
@@ -301,23 +393,23 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                 print "</optgroup></select>\n";
                 print "</td>";
             } elseif ("$column" == "$constraint" and "$column" == "$key") { #Things with constraints
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;'></td>";
+                print "<td><input id='$key' placeholder='$placeholder' type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;' $readonly></td>";
             } elseif ($type == '252' and $horvert == 'vert') { #text
-                print "<td><textarea name=\"f.$uniq.$key\" rows=4 cols='80' placeholder=''>$val</textarea></td>";
+                print "<td><textarea id='$key' placeholder='$placeholder' name=\"f.$uniq.$key\" rows=4 cols='80' placeholder='' $readonly>$val</textarea></td>";
             } elseif ($type == '252' and $horvert == 'hor') { #text
-                print "<td><textarea name=\"f.$uniq.$key\" rows=1 cols='20' placeholder='$key'>$val</textarea></td>";
+                print "<td><textarea id='$key' placeholder='$placeholder' name=\"f.$uniq.$key\" rows=1 cols='20' placeholder='$key' $readonly>$val</textarea></td>";
             } elseif ($type == '7') { #DATE-TIMESTAMP
-                print "<td><input type=datetime name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>";
+                print "<td><input id='$key' placeholder='$placeholder' type=datetime name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
             } elseif ($type == '10') { #DATE
-                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\"></td>";
+                print "<td><input id='$key'  placeholder='$placeholder' type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
             } elseif ($type == '16') { #BIT
-                print "<td><input type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" style='font-family:fixed,courier;'></td>";
+                print "<td><input id='$key' placeholder='$placeholder' type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" style='font-family:fixed,courier;' $readonly></td>";
             } elseif ($key == 'email' and $type == '253') { #DATE
-                print "<td><input type=email name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='e-mail'></td>";
+                print "<td><input id='$key' placeholder='$placeholder' type=email name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='e-mail' $readonly></td>";
             } elseif ($type == '2' or $type == '3' or $type == '4' or $type == '5' or $type == '8' or $type == '9' or $type == '246') { #NUMBERS
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='text-align:right;'></td>";
+                print "<td><input id='$key' placeholder='$placeholder' type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='text-align:right;' $readonly></td>";
             } else {
-                print "<td><input type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='$key $type/$length' size='$length'></td>";
+                print "<td><input id='$key' type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='$placeholder' size='$length' $readonly></td>";
             };
             $c++;
             if ($horvert == 'vert') {
@@ -332,35 +424,6 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
     };
     print "</table>";
     print "</form>";
-};
-function gltablebrowse($table, $start, $records, $sortby) {
-    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-    $records = '10';
-    $q = '';
-    $q.= "select * from $table";
-    if (!empty($start)) {
-        if (empty($sortby)) {
-            $start = dtnum($start);
-            $q.= " where $sortby >= '$start'";
-        } else {
-            $start = dtnum($start);
-            $q.= " where uniq >= '$start'";
-        };
-    };
-    if (!empty($sortby)) {
-        $q.= " order by $sortby";
-    };
-    if (!empty($records)) {
-        $records = dtnum($records);
-        $q.= " limit $records";
-    };
-    print "<P>";
-    print "<a href='glass.php?mode=tables&submode=browse&table=$table&sortby=uniq&start=1&records=$records'>Begin</A>";
-    print "<a href='glass.php?mode=tables&submode=browse&table=$table&sortby=uniq&start=$start&records=$records'>Here</A>";
-    list($next) = gafm("select max(uniq) from $table where uniq >= '$start' order by uniq limit $records");
-    print "<a href='glass.php?mode=tables&submode=browse&table=$table&sortby=uniq&start=$next&records=$records'>Next</A>";
-    print "</p>";
-    print gltablebrowser(gaaafm("$q"), $table, $start, $sortby, $records);
 };
 function gltablemenu() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
