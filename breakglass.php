@@ -1,5 +1,6 @@
 <?php
-#This is a script used for testing some functions. Not exactly a unit test. 
+//This is a script used for testing some functions. Not exactly a unit test but does test some core functionality
+//It is a good example of using GLASS for some command line utilities/modules. 
 global $db, $lang ; 
 include_once('glass-core.php') ; 
 $db = glconnect() ; 
@@ -15,8 +16,6 @@ print "runsql test\n" ;
 print_r(gaaafm("select uniq,login,name,passwd from users")) ; 
 glist(gaaafm("select uniq,login,name,passwd from users")) ; 
 print gltable(gaaafm("select uniq,login,name,passwd from users"),array('uniq','passwd')) ; 
-
-
 print dt(" This is a \"dirty\" string with ' in it and '0x000000' and \'     ") . "end\n" ; 
 print dtless(" This is a \"dirty\" string with ' in it and '0x000000' and \'     ") . "end\n" ; 
 print "\n" ; 
@@ -26,7 +25,5 @@ print dtamt(" 8.887,0187 A ") . "\n" ;
 $lang = 'en' ; 
 print dtamt(" 8,887.0187 A ") . "\n" ; 
 print "\n" ; 
-
 print_r(each(gaaafm("select * from reports"))) ; 
-
 ?>

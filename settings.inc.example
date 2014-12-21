@@ -3,14 +3,20 @@ $dbserver = 'localhost' ;
 $dblogin = 'glassuser' ; 
 $dbpasswd = 'glassuserpasswd' ; 
 $database = 'glass' ; 
+//  brand shows up in the top menu, it's a project or app name
 $brand = 'GLASS' ; 
+//  path from web server root. Might be '/' or '' if this is in a root directory for a website
 $webroot = '/glass/' ; 
+//  actual path to files
 $shellroot = '/home/domains/foo.com/public/glass' ; 
-$reservoir = '/home/domains/foo.com/reservoir' ; #This can be outside of the web server tree
-$csspath = '/cogs/' ; #path to older bootstrap for now. Will have custom CSS soon
+//  "reservoir" is a temporary directory used by reporting system for reports to be downloaded. 
+//  It can be (and should be) outside of the public web server tree. 
+$reservoir = '/home/domains/foo.com/reservoir' ; 
+//internationalization settings
 $thousands = ',' ; 
 $decimals = '.' ; 
-#This should be copied to settings.inc and set for your system. 
-#.inc files should be configured to be non-retrievable by your web server
+$defaultlang = 'en' ; 
+//  This file should be copied to settings.inc and set for your system. 
+//  .inc files should be configured to be non-retrievable by your web server
 ?>
 
