@@ -6,6 +6,13 @@ function main() {
     #  ini_set('display_errors',1);
     #  ini_set('display_startup_errors',1);
     #  error_reporting(-1);
+
+    if($_SERVER['HTTPS'] != 'on') { 
+	$servername = $_SERVER['SERVER_NAME'] ; 
+	header("Location: https://$servername/") ; 
+	die ; #trying to make sure this is only used via HTTPS
+    } ; 
+
     
     include_once ("glass-core.php");
     $db = glconnect();
@@ -31,19 +38,17 @@ function main() {
         $_COOKIE['d'] = '';
         list($login, $name, $level, $perms) = glauth();
     };
+print "<!DOCTYPE html>\n" ; 
 print <<<EOF
-<!DOCTYPE html>
-<html lang="en" class="no-js">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>GLASS</title>
   <meta name="description" content="A simple clear application framework">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="favicon.png">
-  <link rel="apple-touch-icon" sizes="57x57" href="/images/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="72x72" href="/images/apple-touch-icon-72x72.png">
-  <link rel="apple-touch-icon" sizes="114x114" href="/images/apple-touch-icon-114x114.png">
+  <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="minimal.css">
+
 </head>
 <body>
 EOF;
@@ -54,7 +59,7 @@ EOF;
         print "<td><a href='$script?mode=login' class='button'>Login</A></td>";
         $permcount = count($perms);
         $cookiecount = count($_COOKIE);
-        print "<td>$login $level/$permcount/$cookiecount $fromip</td>";
+        print "<td>$login <span title='security level'>$level</span>/<span title='perms'>$permcount</span>/<span title='cookies'>$cookiecount</span> $fromip</td>";
         print "</tr></table>";
         include('welcome.html') ; 
     };
@@ -71,13 +76,13 @@ EOF;
         print "<td><a href='$script?mode=logout' class='button'>Logout</A></td>";
         $permcount = count($perms);
         $cookiecount = count($_COOKIE);
-        print "<td>$login $level/$permcount/$cookiecount $fromip</td>";
+        print "<td>$login <span title='security level'>$level</span>/<span title='perms'>$permcount</span>/<span title='cookies'>$cookiecount</span> $fromip</td>";
         print "</td></table>";
     };
     //This is the real 'glass' application, a simple, database table editor. 
     //It needs the first column of every table to have a 'uniq' field. 
     //These all need perm control added. 
-    if ($mode == 'tables' and $level > 5) {
+    if ($mode == 'tables' and $level > 4) {
         include_once("glass-tables.php");
         gltables();
     };

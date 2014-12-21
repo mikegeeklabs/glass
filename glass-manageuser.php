@@ -1,25 +1,17 @@
 <?php
 function glassmanageuser() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-    #  ini_set('display_errors',1);
-    #  error_reporting(-1);
-
     $uniq = dt($_REQUEST['uniq']) ; 
     if(empty($uniq)) { 
         $userlogin = dt($_REQUEST['userlogin']) ; 
         list($uniq,$userlogin,$ulevel,$uname,$uemail) =  gafm("select uniq,login,level,name,email from users where login = '$userlogin'") ; 
     } ; 
-    print glisttable(gaaafm("select login,level,name,email from users where uniq = '$uniq'"),array()) ; 
+    print glisttable(gaaafm("select uniq,login,level,name,email from users where uniq = '$uniq'"),array()) ; 
     list($userlogin,$ulevel,$uname,$uemail) =  gafm("select login,level,name,email from users where uniq = '$uniq'") ; 
-    
-
     $submode = 'perms' ; 
-
         if ($submode == 'perms') {
         if ($_REQUEST['action'] == 'save') {
-            runsql("delete from userperms where login = '$userlogin' and portal='$portal'");
-            # print '<pre>' . print_r($_REQUEST['userperms'],1) . '</pre>' ;
-            #print '<pre>' . print_r($_REQUEST,1) . '</pre>' ;
+            runsql("delete from userperms where login = '$userlogin'");
             if (is_array($_REQUEST['userperms'])) { #Saves ARRAY Data, concats string
                 $vv = "";
                 foreach($_REQUEST['userperms'] as $v) {
@@ -27,22 +19,7 @@ function glassmanageuser() {
                     $p.= "$v|";
                 };
             };
-            if ($_REQUEST['systemrole'] == 'vendor') {
-                runsql("update systemusers set systemrole = 'VENDOR',vendor='1',seclevel='60' where login='$userlogin' and portal='$portal'");
-            };
-            #life("$userlogin", '', '', 'permchange', "$_REQUEST[systemrole] $p");
         };
-        #--------------
-        #    $query = "select perm from userperms where login = '$userlogin' and portal = '$portal'" ;
-        #    $result = mysql_query($query, $db) or die("Query gafm failed $query: " . mysql_error());
-        #    while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
-        #        $i = 0;
-        #        while (list($key, $val) = each($row)) {
-        #            $a[$i] = $val;
-        #             $a[$val] = $val;
-        #            $i++;
-        #        };
-        #    };
         $a = glafm("select perm from userperms where login = '$userlogin'");
         if (@in_array('sysusers', $perms)) {
         } else {
@@ -68,7 +45,7 @@ print <<<EOF
 	} 
 </script>
 EOF;
-        print "" . bbf('User Permissions') . "";
+        print "<div class=title>" . bbf('User Permissions') . "</div>";
 
         print "<form action='$script' method='post'><input type='hidden' name='mode' value='manageuser'><input type='hidden' name='submode' value='perms'><input type='hidden' name='action' value='save'><input type='hidden' name='userlogin' value='$userlogin'>";
         print "<input type=button class=button value='" . bbf('toggle all') ."' onClick=\"this.value=check(this.form)\">" ; 
@@ -112,13 +89,5 @@ EOF;
         print "<table><tr><td width='50'>&nbsp;</td><td><input type='reset' name='reset' class='btn' value='" . bbf('reset') . "'></td><td><input type='submit' name='save' class='button' value='" . bbf('Save Changes') . "'></td></tr></table>";
         print "</form>";
     };
-
-    
-    
-
-
-
-
-
 } ; 
 ?>

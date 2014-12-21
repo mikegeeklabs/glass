@@ -1,23 +1,9 @@
 
-GeekLabs Application Starter Script
+GeekLabs Application Starter Scripts
 
-This is not even close to be ready for sharing or hosting on a public web server. 
+Version 0.1 (Winter Solstice Edition) -> Enough works to be useful in other projects. 
 
-Playing with ideas for a PHP Framework and basic sample application. 
-
-The goal is a clean reasonably secure framework for basic PHP/MySQL/MariaDB applications
-using the MySQLI connectors.
-
-GLASS Goals: 
- A reasonably secure framework for basic PHP/MySQL/MariaDB applications.
- Support for the PHP Native MySQLI connectors
- Support both web and CLI usage
- Multi-language/timezone support
- Table Data Editing and Reporting
- Clear Easy To Read/Maintain Code
- 
-If you want to play with this code, please do. I am. 
-
+See "welcome.html" for detailed status and usage. 
 
 
 

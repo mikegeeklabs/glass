@@ -207,27 +207,30 @@ function glauth() {
     $level = 0;
     $posslogin = dt($_SERVER['PHP_AUTH_USER']); #sets login here, or in fakeauth.
     $posspasswd = dt($_SERVER['PHP_AUTH_PW']);
-    $passwdhash = sha1($posspasswd);
     $level = 0 ; 
     $name = '' ; 
     $perms = array() ; 
-#    if($_REQUEST['mode'] == 'unperson') {     
-#            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=$script?\">";
-#           return array('guest','guest',10,$perms);
-#    } ;     
-#    if (!isset($_SERVER['PHP_AUTH_USER']) or (isset($_SERVER['PHP_AUTH_USER']) and $_COOKIE['a'] == '')) {
     if (!isset($_SERVER['PHP_AUTH_USER'])) {
         header("WWW-Authenticate: Basic realm=\"Credentials Please (1)\"");
         header('HTTP/1.0 401 Unauthorized');
         print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=$script?\">";
         exit ; 
     } elseif (isset($_SERVER['PHP_AUTH_USER']) and empty($_COOKIE['a']) and $_REQUEST['mode'] == 'logout') {         
-        header("WWW-Authenticate: Basic realm=\"Credentials or click OK then Escape\"");
+        header("WWW-Authenticate: Basic realm=\"Re-enter Credentials or click OK then Escape\"");
         header('HTTP/1.0 401 Unauthorized');
         print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"0; URL=$script?\">";
         exit ; 
     } elseif (isset($_SERVER['PHP_AUTH_USER']) and empty($_COOKIE['a']) and $_REQUEST['mode'] == 'login') {         
-      list($login,$name,$level) = gafm("select login,name,level from users where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
+        list($login,$name,$level,$passwd) = gafm("select login,name,level,passwd from users where login = '$posslogin' limit 1") ;  
+        if(glpasswdverify($posspasswd,$passwd)) { 
+        
+        } else { 
+           $login = '' ; 
+           $name = '' ; 
+           $level = 0 ; 
+           $passwd = '' ; 
+        } ;  
+        
         if ($level > 0) {
             if(empty($_COOKIE['a'])) {
                 $fromip = $_SERVER['REMOTE_ADDR'];
@@ -246,12 +249,21 @@ function glauth() {
         };
         #now we have a chicken and egg problem
     } else {
-      list($login,$name,$level) = gafm("select login,name,level from users where login = '$posslogin' and (passwd = '$posspasswd' or passwd = '$passwdhash') limit 1") ;  
+        list($login,$name,$level,$passwd) = gafm("select login,name,level,passwd from users where login = '$posslogin' limit 1") ;  
+        if(glpasswdverify($posspasswd,$passwd)) { 
+        
+        } else { 
+           $login = '' ; 
+           $name = '' ; 
+           $level = 0 ; 
+           $passwd = '' ; 
+        } ;  
+
         if (empty($_COOKIE['a'])) {
             header("WWW-Authenticate: Basic realm=\"Credentials or click OK then Escape\"");
             header('HTTP/1.0 401 Unauthorized');
             print bbf('Error 401') . ' c<hr>' . bbf('You must have a valid login and password to access this system');
-            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"1; URL=$script?mode=welcome\">";
+            print "<META HTTP-EQUIV=\"Refresh\" CONTENT=\"2; URL=$script?mode=welcome&submode=logout\">";
             die ;
         };
        # print "RE-AUTH" ; 
@@ -340,5 +352,19 @@ function gllog($log, $what) {
     fclose($fileout);
 };
 
+function glpasswdhash($input) {
+#This should not be used on PHP < 5.5, use PHP's 'password_hash' instead. 
+#This is for PHP 5.3
+$salt = mcrypt_create_iv(22, MCRYPT_DEV_URANDOM);
+$salt = base64_encode($salt);
+$salt = str_replace('+', '.', $salt);
+$hash = crypt("$input", '$2y$10$'.$salt.'$');
+return $hash;
+} ; 
+
+function glpasswdverify($input,$existinghash) {
+  $hash = crypt($input, $existinghash);
+  return $hash === $existinghash ; // returns true/1 if matches. 
+} ; 
 
 ?>

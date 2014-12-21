@@ -20,8 +20,10 @@ body {
 }
 .button:hover {
   background-color: #aaaaff;
-  color: 0000FF ; 
+  color:#0000FF; 
 }
 .button:active {
   top: 1px;
 }
+
+.title { font-size:large;font-weight:bold;margin:15px 0px 0px 0px;}

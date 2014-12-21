@@ -91,9 +91,9 @@ function gltablesearch() {
             print "<tr>";
             while (list($key, $val) = each($row)) {
                 list($ztable,$field,$display,$description,$specialformat,$placeholder) = 
-                gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+                gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from fielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
                 if(!empty($display)) {
-                    print "<td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                    print "<td style='text-align:right;'><label for='$key'><span title='$key = $description'>" . bbf("$display") . "</span></label></td>";
                 } else {
                     print "<td style='text-align:right;'>$key</td>";
                 } ; 
@@ -119,10 +119,10 @@ function gltablesearch() {
             };
             if ($horvert == 'vert') {
            #     print "<tr><td>$key</td>";
-            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from fielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
 
                 if(!empty($display)) {
-                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$key = $description'>" . bbf("$display") . "</span></label></td>";
                 } else {
                     print "<tr><td style='text-align:right;'>$key</td>";
                 } ; 
@@ -196,6 +196,7 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
         $subsubmode = 'save';
     };
     if ($subsubmode == 'save') {
+        #glprintr($_REQUEST) ; 
         while (list($key, $val) = each($_REQUEST)) {
             if (substr($key, 0, 3) == "fa_") {
                 #print "Saving: $val <BR>" ;
@@ -204,12 +205,22 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                     $itemstring = '|';
                 };
             };
+            if (substr($key, 0, 3) == "fx_") {
+                $newval = '' ; 
+                while(list($k, $v) = each($val)) {
+                    $newval .= "$v " ;
+                } ; 
+                $j = preg_split('/\_/', $key);
+                $q = "update $table set `$j[2]` = '$newval' where uniq = '$j[1]'";
+                runsql($q) ; 
+
+            };
+            
             if (substr($key, 0, 2) == "f_") {
                 # $j = split("[\_]", $key);
                 $j = preg_split('/\_/', $key);
                 if ($j[3] != '' or $j[4] != '') {
                     $j[2].= '_' . $j[3]; #Allows field names with space ;
-                    
                 };
                 if ($j[4] != '') {
                     $j[2].= '_' . $j[4];
@@ -226,8 +237,11 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                 } else { #normal text save
                     $val = stripslashes($val);
                     #$val = ereg_replace("'", "&apos;", $val);
-                    $replace = array('/&#39;/', '/&apos;/');
-                    $val = preg_replace($replace, '\'', $val);
+                    #$replace = array('/&#39;/', '/&apos;/');
+                    #$val = preg_replace($replace, '\'', $val);
+                    $replace = array('/\'/');
+                    $val = preg_replace($replace, '\&apos;', $val);
+                    
                     if ($subsubsubmode == 'zadd') {
                         if ($j[2] == 'uniq') {
                             $q = "select now() ";
@@ -235,7 +249,17 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                             $q = "UPDATE $table set `$j[2]` = '$val' where uniq = '$uniq'";
                         };
                     } else {
+                    
+                        if($j[2] == 'passwd' and strlen($val) < 40) { 
+                            #$val = password_hash($val, PASSWORD_DEFAULT) ; #mysql 5.5+
+                            $val = glpasswdhash($val) ; #mysql < 5.5
+                        } ; 
+                    
+                    
                         $q = "update $table set `$j[2]` = '$val' where uniq = '$j[1]'";
+                        
+                        
+                        
                     };
                 };
                 #print "<pre>$q</pre>" ;
@@ -243,9 +267,9 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                 $start = $j[1];
             };
         };
-        if ($itemstring != '') { # used for fa_ items that create a Ghetto Normalized Data Set.
-            $query = "update $_REQUEST[sourcetable] set $_REQUEST[sourcefield] = '$itemstring' where uniq = '$_REQUEST[sourceuniq]' and portal = '$portal'";
-            $result = mysqli_query($db, $query) or die("Query failed : " . mysqli_error());
+        if ($itemstring != '') { # used for fa_ items that create a Ghetto Normalized Data Set or 2 parts like datetime
+           # $query = "update $_REQUEST[sourcetable] set $_REQUEST[sourcefield] = '$itemstring' where uniq = '$_REQUEST[sourceuniq]' and portal = '$portal'";
+           # $result = mysqli_query($db, $query) or die("Query failed : " . mysqli_error());
         };
     };
     include ("settings.inc");
@@ -271,7 +295,7 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
 
     print "<pre>$query</pre>";
     
-    $tabledesc = gaafm("select * from gltabledesc where `table` = '$table'") ; 
+    $tabledesc = gaafm("select * from tabledesc where `table` = '$table'") ; 
     #glprintr($tabledesc) ; 
     print "<form>";
     print "<input type=hidden name=mode value='tables'>";
@@ -299,20 +323,19 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
     };
     print "<td><A HREF='glass.php?mode=tables&submode=browse&table=$table' class=button style='font-size:large;'>Browse</A></td>";
     print "<td><A HREF='glass.php?mode=tables&submode=search&table=$table' class=button style='font-size:large;'>Search</A></td>";
+    if(!empty($tabledesc[specialformat]) and $horvert == 'vert') {
+        $link = $tabledesc[specialformat] ; 
+        $strip = array('/\$uniq/');
+        $link = preg_replace($strip, "$uniq", $link);
+        print "<td><A HREF='$script?$link' class='button' style='font-size:large;'>Manage</A></td>" ;     
+    } ;     
 
     if($editmode == 'edit') {
         print "<td><input type=submit name=action value='Save' class=button style='font-size:large;'></td>";
     } else { 
         $readonly = 'READONLY' ; 
     } ; 
-    if(!empty($tabledesc[specialformat]) and $horvert == 'vert') {
-        $link = $tabledesc[specialformat] ; 
-        $strip = array('/\$uniq/');
-        $link = preg_replace($strip, "$uniq", $link);
-        print "<td><A HREF='$script?$link' class='button'>Manage</A>" ;     
-
-    } ;     
-    print "</table>";
+    print "</tr></table>";
     print "<table>";
     #If "hor" creates a title bar
     
@@ -323,10 +346,10 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
             print "<tr>";
             while (list($key, $val) = each($row)) {
 
-            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from fielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
 
                 if(!empty($display)) {
-                    print "<td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                    print "<td style='text-align:right;'><label for='$key'><span title='$key = $description'>" . bbf("$display") . "</span></label></td>";
                 } else {
                     print "<td style='text-align:right;'>$key</td>";
                 } ; 
@@ -348,14 +371,14 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
         $c = 0 ; 
         while (list($key, $val) = each($row)) {
             #-------------------------------------------------------
-            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from glfielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
+            list($ztable,$field,$display,$description,$specialformat,$placeholder) = gafm("select `table`,`field`,`display`,`description`,`specialformat`,`placeholder` from fielddesc where `field` = '$key' and (`table` = '$table' or `table` ='*') order by `table` DESC") ; 
 
             if ($key == 'uniq') {
                 $uniq = $val;
             };
             if ($horvert == 'vert') {
                 if(!empty($display)) {
-                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$description'>" . bbf("$display") . "</span></label></td>";
+                    print "<tr><td style='text-align:right;'><label for='$key'><span title='$key = $description'>" . bbf("$display") . "</span></label></td>";
                 } else {
                     print "<tr><td style='text-align:right;'>$key</td>";
                 } ; 
@@ -377,6 +400,8 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
                 print "<td><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY>---</td>";
             } elseif ($key == 'uniq' and $options != 'zadd') {
                 print "<td><A id='$key' HREF='glass.php?mode=tables&submode=edit&table=$table&uniq=$val'>$val</A><input TYPE=HIDDEN name=\"f.$uniq.$key\" value=\"" . $val . "\" READONLY></td>";
+            } elseif ($key == 'passwd' and $options != 'zadd') {
+                print "<td><input id='$key' placeholder='$placeholder' type=password name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
             } elseif (!empty($reftable) and !empty($refcolumn)) {
                 print "<td>";
                 print "<select id='$key' name=\"f.$uniq.$key\" REQUIRED $readonly>";
@@ -395,16 +420,34 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
             } elseif ("$column" == "$constraint" and "$column" == "$key") { #Things with constraints
                 print "<td><input id='$key' placeholder='$placeholder' type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='background:#FFFFFF;font-weight:bold;font-size:large;' $readonly></td>";
             } elseif ($type == '252' and $horvert == 'vert') { #text
+                if($key == 'query' or $key == 'query2') { 
+                print "<td><textarea id='$key' placeholder='$placeholder' name=\"f.$uniq.$key\" rows=10 cols='120' placeholder='' $readonly>$val</textarea></td>";
+                } else {
                 print "<td><textarea id='$key' placeholder='$placeholder' name=\"f.$uniq.$key\" rows=4 cols='80' placeholder='' $readonly>$val</textarea></td>";
+                } ; 
             } elseif ($type == '252' and $horvert == 'hor') { #text
                 print "<td><textarea id='$key' placeholder='$placeholder' name=\"f.$uniq.$key\" rows=1 cols='20' placeholder='$key' $readonly>$val</textarea></td>";
             } elseif ($type == '7') { #DATE-TIMESTAMP
-                print "<td><input id='$key' placeholder='$placeholder' type=datetime name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
+               #if only 'datetime' was a working type. 
+               # print "<td><input id='$key' placeholder='$placeholder' type=\"datetime\" name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
+               #instead we break it into 2 pieces and hopefull they come back together. 
+               $date = substr($val,0,10) ; $time = substr($val,11,8) ; 
+               #Laughing at:  "Web authors have no way to change the date format because there currently is no standards to specify the format. " ; 
+               #I hate that I can't force this to the 'wire' format of YYYY-MM-DD
+               if($horvert == 'vert') {
+                   print "<td><input id='$key' placeholder='$placeholder' type=\"date\" name=\"fx.$uniq.$key" . "[]\" value=\"" . $date . "\" $readonly>";
+                   print "<input id='$key' placeholder='$placeholder' type=\"time\" name=\"fx.$uniq.$key" . "[]\" value=\"" . $time . "\" $readonly></td><td>" ; 
+                   print "<span style='color:#888888;font-size:x-small;'>$val</span>" ; 
+                   print "</td>";
+               } else { 
+                   #works better in horizontal displays
+                   print "<td><input id='$key' placeholder='$placeholder' type=\"datetime\" name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
+               } ; 
             } elseif ($type == '10') { #DATE
                 print "<td><input id='$key'  placeholder='$placeholder' type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" $readonly></td>";
             } elseif ($type == '16') { #BIT
                 print "<td><input id='$key' placeholder='$placeholder' type=date name=\"f.$uniq.$key\" value=\"" . $val . "\" style='font-family:fixed,courier;' $readonly></td>";
-            } elseif ($key == 'email' and $type == '253') { #DATE
+            } elseif ($key == 'email' and $type == '253') { #EMAIL
                 print "<td><input id='$key' placeholder='$placeholder' type=email name=\"f.$uniq.$key\" value=\"" . $val . "\" placeholder='e-mail' $readonly></td>";
             } elseif ($type == '2' or $type == '3' or $type == '4' or $type == '5' or $type == '8' or $type == '9' or $type == '246') { #NUMBERS
                 print "<td><input id='$key' placeholder='$placeholder' type=text name=\"f.$uniq.$key\" value=\"" . $val . "\" style='text-align:right;' $readonly></td>";
@@ -466,13 +509,13 @@ function gltablestables($a, $toton) {
         $trow.= '<tr>';
         foreach($v as $key => $val) {
             if (empty($theader)) {
-                $th.= "<th>$key</th>";
+                $th.= "<th style='font-weight:bold;font-size:small;border-bottom:1px solid #000000;'>$key</th>";
                 if ($key == 'table') {
-                    $th.= "<th></th><th></th>";
+                    $th.= "<th style='font-weight:bold;font-size:small;border-bottom:1px solid #000000;'></th><th style='font-weight:bold;font-size:small;border-bottom:1px solid #000000;'></th>";
                 };
             }; //builder a table header ;
             if ($key == 'table') {
-                $trow.= '<td width=100><b>' . $val . '</b></td>';
+                $trow.= '<td width=100 style="font-weight:bold;font-size:large;">' . $val . '</td>';
                 $trow.= '<td>';
                 $trow.= '<table><tr><td width=100><A HREF="glass.php?mode=tables&submode=browse&table=' . $val . '">Browse</A></td>
         <td width=100><A HREF="glass.php?mode=tables&submode=search&table=' . $val . '">Search</A></td>
@@ -483,15 +526,19 @@ function gltablestables($a, $toton) {
                 list($val) = gafm("select count(*) from `$table`");
                 $trow.= '<td style="text-align:right;color:#000000;"><b>' . $val . '</b></td>';
             } else {
-                $trow.= '<td style="text-align:right;color:#666666;">' . $val . '</td>';
+                $trow.= '<td style="text-align:right;color:#666666;font-size:x-small;">' . $val . '</td>';
             };
             if (@in_array($key, $toton)) {
                 $totals["$key"]+= ($val*1);
             };
         };
+        $trow .= "<td style='color:#666666;font-size:x-small;line-height:90%;'>" ; 
+        list($display,$description) =  gafm("select display,description from tabledesc where `table` = '$table'") ; 
+        if(!empty($description)) { $trow .= "<b>$table/$display</b> $description" ; } ; 
+        $trow .= "</td>" ; 
         $trow.= '</tr>' . "\n";
         if (empty($theader)) {
-            $theader = "<tr>$th</tr>\n";
+            $theader = "<tr>$th<th style='font-weight:bold;font-size:small;border-bottom:1px solid #000000;'></th><th style='font-weight:bold;font-size:small;border-bottom:1px solid #000000;'></th></tr>\n";
         }; //builder a table header ;
         
     };

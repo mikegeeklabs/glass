@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS `customers`;
 CREATE TABLE `customers` (
   `uniq` bigint(20) NOT NULL AUTO_INCREMENT,
   `account` varchar(20) NOT NULL DEFAULT '',
-  `passwd` varchar(20) NOT NULL DEFAULT '',
+  `passwd` varchar(255) NOT NULL DEFAULT '',
   `seclevel` int(6) NOT NULL DEFAULT '5',
   `name` varchar(120) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
@@ -54,18 +54,18 @@ CREATE TABLE `customers` (
 
 LOCK TABLES `customers` WRITE;
 /*!40000 ALTER TABLE `customers` DISABLE KEYS */;
-INSERT INTO `customers` VALUES (3,'test123','aasasa',88,'MIKE HARRISON','flloozz','mike@flooze.com','','','','','Mind','','','0000-00-00 00:00:00','0000-00-00 00:00:00','127.0.0.2'),(4,'test1234','lakslsaas',5,'','flloozz','mike@geeklabs.com','','','','','Mind','','','0000-00-00 00:00:00','0000-00-00 00:00:00','127.0.0.2');
+INSERT INTO `customers` VALUES (4,'test1234','$2y$10$.7zWCLljOmX.oyCvG7CMgOvf.Eqt5yY7l5niurC0kcxd/Dw7a3JBy',5,'Mike Harrison','4239333902','mike@geeklabs.com','','','','','Confusion','','','0000-00-00 00:00:00','0000-00-00 00:00:00','127.0.0.2');
 /*!40000 ALTER TABLE `customers` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
--- Table structure for table `glfielddesc`
+-- Table structure for table `fielddesc`
 --
 
-DROP TABLE IF EXISTS `glfielddesc`;
+DROP TABLE IF EXISTS `fielddesc`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `glfielddesc` (
+CREATE TABLE `fielddesc` (
   `uniq` int(10) NOT NULL AUTO_INCREMENT,
   `table` varchar(20) DEFAULT NULL,
   `field` varchar(80) DEFAULT NULL,
@@ -81,42 +81,13 @@ CREATE TABLE `glfielddesc` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `glfielddesc`
+-- Dumping data for table `fielddesc`
 --
 
-LOCK TABLES `glfielddesc` WRITE;
-/*!40000 ALTER TABLE `glfielddesc` DISABLE KEYS */;
-INSERT INTO `glfielddesc` VALUES (1,'*','name','Name','The person or entities full name','',''),(3,'*','login','Login','a person or entity that uses the system as an admin has a login. a customer has an account number','','');
-/*!40000 ALTER TABLE `glfielddesc` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `gltabledesc`
---
-
-DROP TABLE IF EXISTS `gltabledesc`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `gltabledesc` (
-  `uniq` int(10) NOT NULL AUTO_INCREMENT,
-  `table` varchar(20) DEFAULT NULL,
-  `display` varchar(80) DEFAULT NULL,
-  `description` text,
-  `specialformat` varchar(80) DEFAULT '',
-  PRIMARY KEY (`uniq`),
-  UNIQUE KEY `id` (`uniq`),
-  KEY `table` (`table`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `gltabledesc`
---
-
-LOCK TABLES `gltabledesc` WRITE;
-/*!40000 ALTER TABLE `gltabledesc` DISABLE KEYS */;
-INSERT INTO `gltabledesc` VALUES (1,'users','Users','Admin and special access users of this system. This table and userperms works together to define a user and what they can access','mode=manageuser&uniq=$uniq');
-/*!40000 ALTER TABLE `gltabledesc` ENABLE KEYS */;
+LOCK TABLES `fielddesc` WRITE;
+/*!40000 ALTER TABLE `fielddesc` DISABLE KEYS */;
+INSERT INTO `fielddesc` VALUES (1,'*','name','Name','The person or entities full name','',''),(3,'*','login','Login','a person or entity that uses the system as an admin has a login. a customer has an account number','','');
+/*!40000 ALTER TABLE `fielddesc` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -323,7 +294,7 @@ CREATE TABLE `reports` (
 
 LOCK TABLES `reports` WRITE;
 /*!40000 ALTER TABLE `reports` DISABLE KEYS */;
-INSERT INTO `reports` VALUES (10,'lookup','FirstReport','People Report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0000,0,'2014-11-17','2014-11-17 16:12:14'),(30,'lookup','allpeople','allpeople report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0058,69,'2014-11-17','2014-11-18 14:38:03');
+INSERT INTO `reports` VALUES (10,'lookup','FirstReport','People Report','',90,'','','select * from people where login = &apos;input1&apos; and created >= &apos;fromdate&apos; and created < &apos;todate&apos; ','','','integer,double|decimal|bit,level','','Login','','','','','','','','','','','','','','','','','','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL','','','','','','D',40,0.0000,0,'2014-11-17','2014-11-17 16:12:14'),(30,'lookup','allpeople','allpeople report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0058,69,'2014-11-17','2014-11-18 14:38:03');
 /*!40000 ALTER TABLE `reports` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -350,8 +321,37 @@ CREATE TABLE `state` (
 
 LOCK TABLES `state` WRITE;
 /*!40000 ALTER TABLE `state` DISABLE KEYS */;
-INSERT INTO `state` VALUES (23,'Confusion','2012-02-17 20:47:19'),(24,'Emergency','2013-03-04 22:07:31'),(25,'Art','2013-03-04 22:08:39'),(26,'Mind','2013-03-04 22:08:57'),(27,'California','2013-03-04 22:09:32'),(28,'Tennessee','2013-03-04 22:09:40'),(29,'New York','2013-03-04 22:09:50');
+INSERT INTO `state` VALUES (23,'Confusion','2012-02-11 20:47:19'),(24,'Emergency','2013-03-04 22:07:31'),(25,'Art','2013-03-04 22:08:39'),(26,'Mind','2013-03-04 22:08:57'),(27,'California','2013-03-04 22:09:32'),(28,'Tennessee','2013-03-04 22:09:40'),(29,'New York','2013-03-04 22:09:50');
 /*!40000 ALTER TABLE `state` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tabledesc`
+--
+
+DROP TABLE IF EXISTS `tabledesc`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tabledesc` (
+  `uniq` int(10) NOT NULL AUTO_INCREMENT,
+  `table` varchar(20) DEFAULT NULL,
+  `display` varchar(80) DEFAULT NULL,
+  `description` text,
+  `specialformat` varchar(80) DEFAULT '',
+  PRIMARY KEY (`uniq`),
+  UNIQUE KEY `id` (`uniq`),
+  KEY `table` (`table`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tabledesc`
+--
+
+LOCK TABLES `tabledesc` WRITE;
+/*!40000 ALTER TABLE `tabledesc` DISABLE KEYS */;
+INSERT INTO `tabledesc` VALUES (1,'users','Users','Admin and special access users of this system. This table and userperms works together to define a user and what they can access. The passwd field is bcrypt hashed. ','mode=manageuser&uniq=$uniq'),(3,'userperms','User Permissions','Specific permissions per user/login. Use the \"Manage\" button under the user tab to use this. ',''),(4,'state','State','An example \"foreign key\" lookup table. In the demo, used for user state lookups.',''),(6,'tabledesc','Table Descriptions','A description of each table, with a display name and a \"special format\" for holding a URL for a special table interface. ',''),(7,'reports','Reports','The report definitions used by the reporting module',''),(8,'reportq','Report Queue','Holds reports to be generated in the background. Required \"reportrunner\" to be running via cron.',''),(9,'perms','Permissions','the master list of available permissions',''),(10,'localreports','Local Reports','User edited reports, these should stay local to the installed system and not updated.',''),(11,'fielddesc','Field Descriptions','Descriptions of fields, formatting. Can be global or table specific.',''),(12,'customers','Customers','Sample table of customers.','');
+/*!40000 ALTER TABLE `tabledesc` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -373,7 +373,7 @@ CREATE TABLE `userperms` (
   KEY `perm` (`perm`) USING BTREE,
   CONSTRAINT `userperms_ibfk_1` FOREIGN KEY (`perm`) REFERENCES `perms` (`perm`),
   CONSTRAINT `userperms_ibfk_2` FOREIGN KEY (`login`) REFERENCES `users` (`login`)
-) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=153 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -382,7 +382,7 @@ CREATE TABLE `userperms` (
 
 LOCK TABLES `userperms` WRITE;
 /*!40000 ALTER TABLE `userperms` DISABLE KEYS */;
-INSERT INTO `userperms` VALUES (2,'*','mike','data'),(3,'*','mike','reports'),(5,'*','mike','sysusers'),(25,'*','admin','sysusers'),(51,'','admin','data'),(52,'','admin','reports'),(53,'','admin','sysusers');
+INSERT INTO `userperms` VALUES (148,'','mike','data'),(149,'','mike','sysusers'),(150,'','admin','data'),(151,'','admin','reports'),(152,'','admin','sysusers');
 /*!40000 ALTER TABLE `userperms` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -396,7 +396,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `uniq` bigint(20) NOT NULL AUTO_INCREMENT,
   `login` varchar(20) NOT NULL DEFAULT 'invalid',
-  `passwd` varchar(80) NOT NULL DEFAULT '87654321ABCDEF',
+  `passwd` varchar(255) NOT NULL DEFAULT '87654321ABCDEF',
   `level` int(5) NOT NULL DEFAULT '0',
   `name` varchar(20) NOT NULL DEFAULT '',
   `created` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -415,7 +415,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'mike','1234',99,'','0000-00-00 00:00:00','2014-12-05 12:12:32',''),(2,'admin','1234',90,'Glass Hole','0000-00-00 00:00:00','2014-12-07 14:44:38','mike@geeklabs.com');
+INSERT INTO `users` VALUES (1,'mike','$2y$10$DIlVwuyWttGOSPJj2HnFa..E3QvfprA3AmdCpkCnKl9J1kYScKOeu',199,'','2014-12-20 08:00:00','2014-12-20 22:20:15','mike@utiliflex.com'),(2,'admin','$2y$10$CvpxdNwlh8h0fma84uWpUu6viqFqdWUbSCnUsdanbXgzE6sPvLe9a',90,'Glass Hole','0000-00-00 00:00:00','2014-12-07 14:44:38','mike@geeklabs.com');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -428,4 +428,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-12-07 14:14:06
+-- Dump completed on 2014-12-21  9:21:35

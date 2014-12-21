@@ -1,20 +1,34 @@
-<blockquote>
-<p>This is GLASS.</p>
-<p>You can edit this message by editing 'welcome.html' in this
-directory. This is a basic application framework. A place to get started on
-an application that uses PHP and MYSQL.</p>
-<p>On purpose, it does not use much CSS or any JavaScript.</p>
-
-
-
-<p>
-
-</p>
-
-
-
-
-
-
-</blockquote>
-
+<H1>GLASS = GeekLabs Application Starter Scripts</H1>
+<h4>GLASS Version 0.1 2014-12-21, Winter Solstice Edition</h4>
+The basic applation framework and key pieces all work well enough to use in
+other projects that I need to start work on. 
+<hr>
+<h2>GLASS Goals</h2>
+<ol>
+<li>A reasonably secure framework for basic PHP/MySQL/MariaDB applications.
+<li>Support for the PHP Native MySQLI connectors
+<li>Useful for both web and CLI usage
+<li>Multi-language/timezone support
+<li>Table Data Editing and Reporting
+<li>Clear Easy To Read/Maintain Code
+<li>Minimal CSS and no jQuery required.  
+<li>Using HTML5 for Datepickers and other elements
+</ol>
+<h2>Release Log</h2>
+<table><tr><th>Date</th><th>What</th></tr>
+<tr><td>2014-12-21</td><td>0.1 release, basics work.</td></tr>
+</table>
+<h2>To Do:</h2>
+<ol>
+<li>Remove/replace Bootstrap CSS from report module
+<li>BBF/Internationalize Everything
+<li>Find a way to "de-auth" when using Chrome and MSIE. Firefox handles basic auth properly
+<li>Build my own charting system for reporting (currently using FLOT)
+</ol>
+<h2>Instructions:</h2>
+<ol>
+<li>Create database (MySQL/MariaDB) and load 'database.sql'
+<li>Edit settings.inc (note; configure webserver to not deliver .inc files)
+<li>Make sure HTTPS is configured for this site. "basic auth" is only secure when using HTTPS, which you should be using anyway. StartSSL.com is worth exploring. 
+<li>Use 'glass.php' - default login is:  admin /1234  (yes, you need to change that password, edit the users table. 'passwd' field is bcrypt hashed)
+</ol>

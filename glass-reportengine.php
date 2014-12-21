@@ -3,6 +3,11 @@
 function reports() {
     #    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate  ;
+
+      ini_set('display_errors',1);
+    #  ini_set('display_startup_errors',1);
+      error_reporting(-1);
+
     include_once ('glass-core.php'); #redundant, but this can be initiated by CLI or other means.
     $db = glconnect();
  ##   list($login,$name,$level,$perms) = glauth() ;  
