@@ -294,7 +294,7 @@ CREATE TABLE `reports` (
 
 LOCK TABLES `reports` WRITE;
 /*!40000 ALTER TABLE `reports` DISABLE KEYS */;
-INSERT INTO `reports` VALUES (10,'lookup','FirstReport','People Report','',90,'','','select * from people where login = &apos;input1&apos; and created >= &apos;fromdate&apos; and created < &apos;todate&apos; ','','','integer,double|decimal|bit,level','','Login','','','','','','','','','','','','','','','','','','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL','','','','','','D',40,0.0000,0,'2014-11-17','2014-11-17 16:12:14'),(30,'lookup','allpeople','allpeople report',NULL,90,'','','select * from people where login = &apos;input1&apos; and created >= &#39;fromdate&#39; and created < &#39;todate&#39; ',NULL,NULL,'integer,double|decimal|bit,level',NULL,'Login','',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'',NULL,'','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL',NULL,NULL,NULL,NULL,NULL,'D',40,0.0058,69,'2014-11-17','2014-11-18 14:38:03');
+INSERT INTO `reports` VALUES (10,'lookup','Customers','All Customers','',90,'','','select * from customers','','','integer,double|decimal|bit,level','','Login','','','','','','','','','','','','','','','','','','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL','','','','','','D',40,0.0059,1,'2014-11-17','2014-12-22 00:58:51'),(30,'lookup','allpeople','allpeople report','',90,'','','select * from users where login = &apos;input1&apos; and created >= &apos;fromdate&apos; and created < &apos;todate&apos; ','','','integer,double|decimal|bit,level','','Login','','','','','','','','','','','','','','','','','','REPORT','HTML|CSV|XLS|PDF','NOW|OFFLINE|EMAIL','','','','','','D',40,0.0073,70,'2014-11-17','2014-12-22 00:58:22');
 /*!40000 ALTER TABLE `reports` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -373,7 +373,7 @@ CREATE TABLE `userperms` (
   KEY `perm` (`perm`) USING BTREE,
   CONSTRAINT `userperms_ibfk_1` FOREIGN KEY (`perm`) REFERENCES `perms` (`perm`),
   CONSTRAINT `userperms_ibfk_2` FOREIGN KEY (`login`) REFERENCES `users` (`login`)
-) ENGINE=InnoDB AUTO_INCREMENT=153 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=160 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -382,7 +382,7 @@ CREATE TABLE `userperms` (
 
 LOCK TABLES `userperms` WRITE;
 /*!40000 ALTER TABLE `userperms` DISABLE KEYS */;
-INSERT INTO `userperms` VALUES (148,'','mike','data'),(149,'','mike','sysusers'),(150,'','admin','data'),(151,'','admin','reports'),(152,'','admin','sysusers');
+INSERT INTO `userperms` VALUES (153,'','mike','data'),(154,'','mike','sysusers'),(157,'','admin','data'),(158,'','admin','reports'),(159,'','admin','sysusers');
 /*!40000 ALTER TABLE `userperms` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -415,7 +415,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'mike','$2y$10$DIlVwuyWttGOSPJj2HnFa..E3QvfprA3AmdCpkCnKl9J1kYScKOeu',199,'','2014-12-20 08:00:00','2014-12-20 22:20:15','mike@utiliflex.com'),(2,'admin','$2y$10$CvpxdNwlh8h0fma84uWpUu6viqFqdWUbSCnUsdanbXgzE6sPvLe9a',90,'Glass Hole','0000-00-00 00:00:00','2014-12-07 14:44:38','mike@geeklabs.com');
+INSERT INTO `users` VALUES (1,'mike','$2y$10$DIlVwuyWttGOSPJj2HnFa..E3QvfprA3AmdCpkCnKl9J1kYScKOeu',199,'','2014-12-20 08:00:00','2014-12-20 22:20:15','mike@utiliflex.com'),(2,'admin','$2y$10$CvpxdNwlh8h0fma84uWpUu6viqFqdWUbSCnUsdanbXgzE6sPvLe9a',90,'Glass Hole','2014-12-20 08:00:00','2014-12-07 14:44:38','mike@geeklabs.com');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -428,4 +428,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-12-21  9:21:35
+-- Dump completed on 2014-12-21 16:59:00

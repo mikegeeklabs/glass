@@ -288,7 +288,7 @@ function reportrun() {
                 };
             };
         } else {
-            $result1 = mysqli_query($db,$query) or die("Query failed : $query <p>" . mysqli_error());
+            $result1 = mysqli_query($db,$query) or die("Query 2 failed : $query <p>" . mysqli_error() );
             $lastquery = $query;
         };
         #COMMON FOR EXPORT
@@ -1679,7 +1679,7 @@ EOF;
     $yy+= 50;
     print "<div class='form-actions'>";
     #HERE
-    list($email) = gafm("select email from people where login = '$login'");
+    list($email) = gafm("select email from users where login = '$login'");
     if (preg_match("/OFFLINE/", $outputmode, $matches)) {
         if ($_REQUEST['offline'] == 'true') {
             $c = 'CHECKED';
