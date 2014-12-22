@@ -1,20 +1,15 @@
 <?php
-#A from scratch rewrite of reporting
 function reports() {
-    #    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate  ;
 
-      ini_set('display_errors',1);
+    #  ini_set('display_errors',1);
     #  ini_set('display_startup_errors',1);
-      error_reporting(-1);
+    #  error_reporting(-1);
 
     include_once ('glass-core.php'); #redundant, but this can be initiated by CLI or other means.
     $db = glconnect();
  ##   list($login,$name,$level,$perms) = glauth() ;  
-
     $seclevel = $level; #need to f&r seclevel ?
-
-    print "Level: $login $level" ; 
     if ($level < 5) {
         print "Not for you";
         die;
@@ -53,7 +48,7 @@ function reports() {
             #----------------------============================------------------Danger Will Robinson, Danger!
             $load = sys_getloadavg();
             if ($load[0] > 15) {
-                print "<div style='background:#ffFF88;font-size:x-large;'><i class='icon-exclamation-sign' style='font-size: 32px;'></i>&nbsp;&nbsp;<b>" . $load[0] . "</b>/<i>" . $load[1] . "</i>&nbsp;&nbsp;" . bbf('Extremely High System Load, please try again in 5 minutes') . "</div>";
+                print "<div style='background:#ffFF88;font-size:x-large;'>&nbsp;&nbsp;<b>" . $load[0] . "</b>/<i>" . $load[1] . "</i>&nbsp;&nbsp;" . bbf('Extremely High System Load, please try again in 5 minutes') . "</div>";
                 return;
             }
             if ($dirty) {
@@ -83,7 +78,7 @@ function reportqrun() {
     include "settings.inc"; # get basic config variables - Note: Server configured to not deliver .inc files
     include_once ('glass-core.php');
     $db = glconnect();
-    $level = 90;
+    $level = 90 ;
     $query = "SELECT uniq,portal,login,itemid,request,completedatetime from reportq where completedatetime < '2001-01-01'";
     $result2 = mysqli_query($db,$query) or die("Query failed : " . mysqli_error($db));
     while (list($funiq, $portal, $login, $itemid, $request) = mysqli_fetch_row($result2)) {
@@ -97,7 +92,6 @@ function reportqrun() {
         $email = dtnumber($_REQUEST['email']);
         $_REQUEST['QRUN'] = 'true';
         $rfile = reportrun();
-        #print "Foo" ;
         runsql("update reportq set completedatetime = now() where uniq = '$funiq'");
         if (!empty($email) and $_REQUEST['notify'] == 'true') {
             if (@fopen("glass-sendemail.php", "r")) { #site specific file
@@ -106,7 +100,7 @@ function reportqrun() {
                 if (empty($itemname)) {
                     list($itemname) = gafm("select itemname from localreports where itemid = '$itemid'");
                 };
-                $message = "$baseurl" . "reports.php?mode=reservoir";
+                $message = "$baseurl" . "glass.php?mode=reservoir";
                 $message.= "\n\n";
                 $message.= "$rfile.csv\n";
                 $message.= "$rfile.html\n";
@@ -145,16 +139,12 @@ function reportschedule() {
     #    global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $item, $itemid, $fromdate, $todate, $vendornumber ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     print "$portal &rarr; $login <pre>";
-    #    print_r($_REQUEST) ;
-    #    print "</pre>" ;
     $REQUEST = json_encode($_REQUEST);
     $REQUEST = mysqli_escape_string($REQUEST);
     $_REQUEST['itemid'] = mysqli_escape_string($_REQUEST['itemid']);
     list($pending) = gafm("select count(uniq) from reportq where login = '$login' and completedatetime < '2001-01-01'");
     if ($pending < 5) {
-        $q = "insert into reportq (portal,login,itemid,requestdatetime,request) 
-    values ('$portal','$login','$_REQUEST[itemid]',now(),'$REQUEST')";
-        #    print "<br>$q<br>" ;
+        $q = "insert into reportq (portal,login,itemid,requestdatetime,request) values ('$portal','$login','$_REQUEST[itemid]',now(),'$REQUEST')";
         runsql("$q");
     } else {
         print "<h2>$pending " . bbf('Item Pending Limit') . ": ";
@@ -163,21 +153,18 @@ function reportschedule() {
     };
     include_once ("glass-core.php");
     if ($login == 'admin') {
-        print "<div class='alert'>Admin Debug</div>";
+        print "<div>Admin Debug</div>";
         print quickshowr("select itemid,requestdatetime as Requested,completedatetime as Completed,request from reportq where portal = '$portal' and login = '$login' and completedatetime < '2001-01-01'", 'nada', 'nada', bbf('Pending Items'), 9, '500px');
     };
-    print quickshowr("select q.itemid as Item,report.itemname as Description ,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='reports.php?mode=reservoir'><i class='icon-folder-open' style='font-size: 18px;'></i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
+    print quickshowr("select q.itemid as Item,report.itemname as Description ,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='reports.php?mode=reservoir'>open folder</i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
 };
 function reportrun() {
-    # global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $item, $itemid, $fromdate, $todate, $vendornumber, $item ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate, $thousands, $decimals  ;
-    #should recheck access control ;
+    # should recheck access control ;
     #    $db = glconnect2() ; #Will select a slave system first using other credentials
     $db = glconnect(); #Will select a slave system first
     $time_start = microtime(true);
-    include "settings.inc"; # get basic config variables - Note: Server configured to not deliver .inc files
-
-
+    include "settings.inc"; # get basic config variables - Note: Server should be configured to not deliver .inc files
     $query = "select * from reports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
     $results = gaafm("$query") ; 
     $r = 0 ; 
@@ -187,7 +174,6 @@ function reportrun() {
             $r++ ; 
     } ; #messy way to set all column names to variables containing the data. 
     if ($r < 1) {
-        #--
         $query = "select * from localreports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
         $results = gaafm("$query") ; 
         $r = 0 ; 
@@ -197,9 +183,8 @@ function reportrun() {
             $r++ ; 
         } ; #messy way to set all column names to variables containing the data. 
     };
-    
     if ($r < 1) {
-        print "<div class='alert alert-error'>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
+        print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
         return;
     };
     #LOOP START HERE!!!!!
@@ -235,12 +220,8 @@ function reportrun() {
         if (strlen($fromdate) < 11) {
             $fromdate.= ' 00:00:00';
         };
-        #$query = ereg_replace('fromdate', "$fromdate", $query);
-        #$query = ereg_replace('todate', "$todate", $query);
-
         $query = preg_replace('/fromdate/', "$fromdate", $query);
         $query = preg_replace('/todate/', "$todate", $query);
-        
         #Not elegant, but easy to do/read
         $input1 = reportdetaintstrip($_REQUEST['input1']);
         $input2 = reportdetaintstrip($_REQUEST['input2']);
@@ -249,7 +230,7 @@ function reportrun() {
         $input5 = reportdetaintstrip($_REQUEST['input5']);
         $input6 = reportdetaintstrip($_REQUEST['input6']);
         $input6 = reportdetaintstrip($_REQUEST['input7']);
-        $input8  = reportdetaintstrip($_REQUEST['input8']);
+        $input8 = reportdetaintstrip($_REQUEST['input8']);
         $input9 = reportdetaintstrip($_REQUEST['input9']);
 
         if (preg_match("/\%/", $input1, $matches)) {
@@ -310,10 +291,6 @@ function reportrun() {
             $result1 = mysqli_query($db,$query) or die("Query failed : $query <p>" . mysqli_error());
             $lastquery = $query;
         };
-        
-#        print "<pre><b>$query</b>\n" . print_r($result1,1) . "</pre>" ; 
-        
-        
         #COMMON FOR EXPORT
         $dir = reservoircheckdirs($portal, $portal, $login);
         $now2 = date('Ymd-Hi');
@@ -377,10 +354,8 @@ function reportrun() {
         $c = 1;
         $cc = 0;
         while ($row = mysqli_fetch_assoc($result1)) {
-                #    print_r($row) ;
-
             $x = 1;
-            $TLINE = "<tr><td class=muted style='width:20px;border:1px solid #888888;border-width:0px 1px 0px 0px;'>$y</td>";
+            $TLINE = "<tr><td>$y</td>";
             $defwidth = '100';
             $break = false;
             foreach($groupon as $g) {
@@ -441,9 +416,6 @@ function reportrun() {
                 };
                 if ($key == 'serialnumber') {
                     $sn = $val;
-                };
-                if ($key == 'locid') {
-                    $locid = $val;
                 };
                 if (in_array($key, $groupchart)) {
                     if (!empty($timestamp)) {
@@ -717,7 +689,6 @@ function initialize() {
       tbody { position:absolute;top:$yy2;z-index:-1; }
     </style>
 
-<link href="$csspath/css/bootstrap-responsive.css" rel="stylesheet">
 <table border=0 class='table table-striped table-hover table-condensed'>
 <thead id=tit>
 <tr style='background:#BBBBBB;color:#000000;font-weight:bold;' id=titz>
@@ -740,8 +711,7 @@ EOF;
         if ($style == 'plain' and empty($_REQUEST['QRUN'])) {
             $ym1 = $y-1;
             print <<<EOF
-<link href="$csspath/css/bootstrap-responsive.css" rel="stylesheet">
-<table border=0 class='table table-striped table-hover table-condensed'>
+<table border=0>
 <thead">
 <tr style='background:#CCCCCC;color:#000000;font-weight:bold;' id=titz><td colspan=8>$itemname</td><td colspan=2>$ym1 records</td></tr>
 $TMAP
@@ -761,7 +731,7 @@ EOF;
     }; #END LOOP HERE ;
     #NOW TO WRITE OUT FILES!
     $dir = reservoircheckdirs($portal, $portal, $login);
-    $css = file_get_contents("cogs/css/bootstrap.css");
+    #$css = file_get_contents("cogs/css/bootstrap.css");
     $itemname = detaintstripfilename2($itemname);
     $htmlout = fopen("$dir/$itemname-$now3-$counter.htm", "w");
     fputs($htmlout, "<head><style>$css</style></head><table cellpadding=10><tr><td>#</td>$THEAD</tr>$TMAP $TBODY $TFOOT </table> ");
@@ -878,7 +848,7 @@ function reportitem() {
     $input9 = reportdetaintstrip($_REQUEST['input9']);
 
     if ($r < 1) {
-        print "<div class='alert alert-error'>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
+        print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
         return;
     };
     print "<div class='row noprint'><div class='span6'><div class='pagetitle'><a href='reports.php?mode=item&item=$uniq'>" . bbf("$itemname") . "</a></div></div>";
@@ -1054,7 +1024,7 @@ var q;
   }
   function tf() {
    if (q.value==""){
-     alert("Try meternumber or phone number");
+     alert("Try a key field");
      q.focus();
      return false;
    }
@@ -1068,7 +1038,7 @@ var q;
 EOF;
             print "<div class='control-group'><label class=\"control-label\" for=input1>$input1field</label><div class=controls>";
             print "<table><tr><td colspan=3>";
-            print "<input  class=\"input-medium search-query\" type=text name=input1 id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input1'></td></tr>";
+            print "<input type=text name=input1 id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input1'></td></tr>";
             print '<tr><td colspan=3><div id="picked" style="display: none;"></tr><tr><td colspan=3><div id="LSResult" style="display: none;"><div id="LSShadow"></div></tr></table>';
             print "</div></div>";
         };
@@ -1795,36 +1765,20 @@ function reporttopmenu() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     $menu.= "\n<ul class=nav>";
     if ($level > 40) {
-        $menu.= "<li><a HREF='glass.php?mode=menu'><i class='icon-list-alt' style='font-size: 24px;'></i></a></li>\n";
-        $menu.= "<li><a href='glass.php?mode=reservoir'><i class='icon-folder-open' style='font-size: 18px;'></i></a></li>";
-        if ($multilang and $level > 10) {
-            if (@fopen("languages.php", "r")) { #site specific file
-                $menu.= "<li class=dropdown><a HREF='#' class='dropdown-toggle' data-toggle='dropdown'><i class='icon-flag' style='font-size: 18px;'></i></a>";
-                include ("languages.php");
-                $menu.= "</li>";
-            };
-        };
+       # $menu.= "<li><a HREF='glass.php?mode=menu'>Menu</a></li>\n";
+        $menu.= "<li><a href='glass.php?mode=reservoir'>Folder</a></li>";
     } else {
-        $menu.= "<li><a HREF='glass.php?mode=login'><i class='icon-user' style='font-size: 18px;'></i>&nbsp;$account</a></li>\n";
-        $menu.= "<li><a HREF='reports.php?mode=menu'><i class='icon-list-alt' style='font-size: 18px;'></i></a></li>\n";
+        $menu.= "<li><a HREF='reports.php?mode=menu'>Reports</a></li>\n";
     };
     if (@in_array('editreport', $perms)) {
-        $menu.= "<li><a href='reporteditor.php?mode=create'><i class='icon-plus' style='font-size: 18px;'></i></a></li>";
+        $menu.= "<li><a href='reporteditor.php?mode=create'>Create Report</a></li>";
     };
-    if ($level > 90) {
-        $menu.= "<li><a href='glass.php'><i class='icon-beaker' style='font-size: 18px;'></i></a></li>";
-    };
-    $menu.= "<li><a href='glass.php?mode=logout'><i class='icon-signout' style='font-size: 18px;'></i></a></li>";
-    $menu.= "</ul>\n";
+    #if ($level > 90) {
+    #    $menu.= "<li><a href='glass.php'><i class='icon-beaker' style='font-size: 18px;'></i></a></li>";
+    #};
+    $menu.= "<li><a href='glass.php?mode=logout'>Logout</a></li>";
+    $menu.= "</ul>\n\n";
     print $menu;
-    print <<<EOF
-          </div><!--/.nav-collapse -->
-        </div>
-      </div>
-     </div>
-    </div>
-    <div class="container-fluid">
-EOF;
     
 };
 function reportitemmenu() {
@@ -1859,7 +1813,7 @@ function reportitemmenu() {
     $searchmenu = "<FORM ACTION='reports.php' METHOD='get' name='reportsearch' class='form-search'><input type='hidden' name='mode' value='search'>";
     $searchmenu.= "<div class='input-append' style='padding:10px 0px 0px 10px;'>";
     $searchmenu.= "<input type='text' class='span2 search-query' name='searchfor' value='$searchfor'>";
-    $searchmenu.= "<button class='btn' type='button' onclick=\"document.reportsearch.submit()\"><i class='icon-search' style='font-size: 18px;'></i></button>";
+    $searchmenu.= "<button class='btn' type='button' onclick=\"document.reportsearch.submit()\">Search</button>";
     $searchmenu.= "</div>";
     $searchmenu.= "</FORM>\n";
     foreach($result2 as $row) {
@@ -1890,8 +1844,6 @@ function reportitemmenu() {
     $mainmenu.= "</ul></p></div></div></section>";
 
     print <<<EOF
-<link href="$csspath/css/bootstrap-responsive.css" rel="stylesheet">
-<link href="$csspath/css/docs.css" rel="stylesheet">
 <div class="container-fluid" id=foo>
 <body data-spy="scroll" data-target=".bs-docs-sidebar">
  <div class="row">
@@ -1944,7 +1896,8 @@ function reportexport() {
 function reportheader() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     $r = bbf('Reports');
-    $brand = "<a class='brand' href='glass.php?mode=login'>$login</a>";
+    #$brand = "<a class='brand' href='glass.php?mode=login'>$login</a>";
+    $brand = '' ; 
     $dplang = 'en';
     if ($lang == 'fr' or $lang == 'es') {
         $dplang = $lang;
@@ -1958,10 +1911,6 @@ function reportheader() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="GLASS">
     <meta name="author" content="GeekLabs - Mike Harrison">
-    <link href="$csspath/css/bootstrap.css" rel="stylesheet">
-    <link href="$csspath/css/datepicker.css" rel="stylesheet">
-    <link href="$csspath/css/font-awesome.css" rel="stylesheet">
-    <link href="$csspath/glass.css" rel="stylesheet">
     <style type="text/css" media="print">
       .noprint { display:none; }
     </style>
@@ -1971,36 +1920,11 @@ function reportheader() {
         padding-bottom: 40px;
       }
     </style>
-    <link href="$csspath/css/bootstrap-responsive.css" rel="stylesheet">
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
     <!-- Le fav and touch icons -->
-    <link rel="shortcut icon" href="$csspath/ico/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="$csspath/ico/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="$csspath/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="$csspath/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="$csspath/ico/apple-touch-icon-57-precomposed.png">
-    <script src="$csspath/js/jquery.js"></script>
-    <script src="$csspath/js/bootstrap-transition.js"></script>
-    <script src="$csspath/flot/jquery.flot.js"></script>
-    <script src="$csspath/js/bootstrap-alert.js"></script>
-    <script src="$csspath/js/bootstrap-modal.js"></script>
-    <script src="$csspath/js/bootstrap-dropdown.js"></script>
-    <script src="$csspath/js/bootstrap-scrollspy.js"></script>
-    <script src="$csspath/js/bootstrap-tab.js"></script>
-    <script src="$csspath/js/bootstrap-tooltip.js"></script>
-    <script src="$csspath/js/bootstrap-popover.js"></script>
-    <script src="$csspath/js/bootstrap-button.js"></script>
-    <script src="$csspath/js/bootstrap-collapse.js"></script>
-    <script src="$csspath/js/bootstrap-carousel.js"></script>
-    <script src="$csspath/js/bootstrap-typeahead.js"></script>
-    <script src="$csspath/js/bootstrap-affix.js"></script>
-    <script src="$csspath/js/bootstrap-typeahead.js"></script>
-    <script src="$csspath/js/bootstrap-datepicker.$dplang.js"></script>
-    <script src="staticglass.js"></script>
-    <script src="popupandprint.js"></script>
   </head>
 
   <body>
