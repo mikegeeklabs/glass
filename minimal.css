@@ -13,10 +13,12 @@ body {
 .button {
   border: 0;
   padding: .5em;
-  background-color: #ddddFF;
+  background-color: #aaaaFF;
   color: #000066;
   text-decoration: none;
   position: relative;
+  font-size:large;
+  margin: 2px;	
 }
 .button:hover {
   background-color: #aaaaff;

@@ -156,7 +156,7 @@ function reportschedule() {
         print "<div>Admin Debug</div>";
         print quickshowr("select itemid,requestdatetime as Requested,completedatetime as Completed,request from reportq where portal = '$portal' and login = '$login' and completedatetime < '2001-01-01'", 'nada', 'nada', bbf('Pending Items'), 9, '500px');
     };
-    print quickshowr("select q.itemid as Item,report.itemname as Description ,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='reports.php?mode=reservoir'>open folder</i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
+    print quickshowr("select q.itemid as Item,report.itemname as Description ,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='glass.php?mode=reservoir'>open folder</i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
 };
 function reportrun() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate, $thousands, $decimals  ;
@@ -851,7 +851,7 @@ function reportitem() {
         print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
         return;
     };
-    print "<div class='row noprint'><div class='span6'><div class='pagetitle'><a href='reports.php?mode=item&item=$uniq'>" . bbf("$itemname") . "</a></div></div>";
+    print "<div class='row noprint'><div class='span6'><div class='pagetitle'><a href='glass.php?mode=item&item=$uniq'>" . bbf("$itemname") . "</a></div></div>";
     if ($level > 40) {
         print "<div class=span2>$uniq</div>";
     };
@@ -1714,17 +1714,17 @@ EOF;
         # print "<input type=checkbox name=offline value=true>&nbsp;<i class='icon-time' style='font-size: 18px;'></i>&nbsp;&nbsp;";
         
     };
-    print "<button type=submit class='btn btn-primary' style='margin:0px 20px 0px 20px;'><i class='icon-play' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('Create') . "</button>";
+    print "<button type=submit class='button'>" . bbf('Create') . "</button>";
     if ($mode == 'run' and $_REQUEST['offline'] != 'true') {
         $now3 = date('Ymd');
-        print "<button onClick='window.print()' class='btn btn-info'><i class='icon-print' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('Print') . "</button>";
+        print "<button onClick='window.print()' class='button'>" . bbf('Print') . "</button>";
         #        print "<button onClick='' class='btn btn-info'><i class='icon-download' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('XLS') . "</button>";
         if (preg_match("/XLS/", $outputformats, $matches)) {
             $XLS = true;
             $dir = reservoircheckdirs($portal, $portal, $login);
             $itemnamestripped = detaintstripfilename2($itemname);
             $filename = "$itemnamestripped-$now3-$counter" . ".xlsx";
-            print "&nbsp;&nbsp;&nbsp;&nbsp;<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='btn btn-info'><i class='icon-download' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('XLS') . "</a>";
+            print "<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='button'>" . bbf('XLS') . "</a>";
         } else {
             $XLS = false;
         };
@@ -1734,7 +1734,7 @@ EOF;
             $itemnamestripped = detaintstripfilename2($itemname);
             $filename = "$itemnamestripped-$now3-$counter" . ".csv";
             #print "$dir/$filename" ;
-            print "&nbsp;&nbsp;&nbsp;&nbsp;<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='btn btn-info'><i class='icon-download' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('CSV') . "</a>";
+            print "<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='button'>" . bbf('CSV') . "</a>";
         } else {
             $XLS = false;
         };
@@ -1743,7 +1743,7 @@ EOF;
             $dir = reservoircheckdirs($portal, $portal, $login);
             $itemnamestripped = detaintstripfilename2($itemname);
             $filename = "$itemnamestripped-$now3-$counter" . ".pdf";
-            print "&nbsp;&nbsp;&nbsp;&nbsp;<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='btn btn-info'><i class='icon-download' style='font-size: 18px;'></i>&nbsp;&nbsp;" . bbf('PDF') . "</a>";
+            print "<a href='glass-docsdownload.php?account=$account&dir=$dir&filename=$filename' class='button'>" . bbf('PDF') . "</a>";
         } else {
             $XLS = false;
         };
@@ -1763,23 +1763,15 @@ EOF;
 function reporttopmenu() {
     #global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $multilang, $vendornumber ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-    $menu.= "\n<ul class=nav>";
+
+    print "<hr>" ; 
     if ($level > 40) {
-       # $menu.= "<li><a HREF='glass.php?mode=menu'>Menu</a></li>\n";
-        $menu.= "<li><a href='glass.php?mode=reservoir'>Folder</a></li>";
-    } else {
-        $menu.= "<li><a HREF='reports.php?mode=menu'>Reports</a></li>\n";
-    };
+        print  "<a href='glass.php?mode=reservoir' class=button>Report Folder</a></li>";
+    } ; 
     if (@in_array('editreport', $perms)) {
-        $menu.= "<li><a href='reporteditor.php?mode=create'>Create Report</a></li>";
+        print  "<a href='reporteditor.php?mode=create' class=button>Create Report</a></li>";
     };
-    #if ($level > 90) {
-    #    $menu.= "<li><a href='glass.php'><i class='icon-beaker' style='font-size: 18px;'></i></a></li>";
-    #};
-    $menu.= "<li><a href='glass.php?mode=logout'>Logout</a></li>";
-    $menu.= "</ul>\n\n";
-    print $menu;
-    
+
 };
 function reportitemmenu() {
     #    global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $sseclevel, $vendornumber ;
@@ -1810,7 +1802,7 @@ function reportitemmenu() {
     $peakusage = 0;
     $lastgroup = 'zz'; #dummy trigger setting
     #FIRST INPUT STRING TO SEARCH FOR
-    $searchmenu = "<FORM ACTION='reports.php' METHOD='get' name='reportsearch' class='form-search'><input type='hidden' name='mode' value='search'>";
+    $searchmenu = "<FORM ACTION='glass.php' METHOD='get' name='reportsearch' class='form-search'><input type='hidden' name='mode' value='search'>";
     $searchmenu.= "<div class='input-append' style='padding:10px 0px 0px 10px;'>";
     $searchmenu.= "<input type='text' class='span2 search-query' name='searchfor' value='$searchfor'>";
     $searchmenu.= "<button class='btn' type='button' onclick=\"document.reportsearch.submit()\">Search</button>";

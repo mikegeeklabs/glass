@@ -94,7 +94,7 @@ EOF;
     //the report engine is usually embedded within a larger program or stands alone. 
     //This file (glass.php) can be modified to run it alone by simply removing the menu and 
     //header (html output) once logged in. 
-    if (($mode == 'reports' or $mode == 'item' or $mode == 'run' or $mode == 'export') and $level > 5 ) {
+    if (($mode == 'reports' or $mode == 'item' or $mode == 'run' or $mode == 'export' or $mode == 'search' ) and $level > 5 ) {
         include_once ("glass-reportengine.php");
         reports();
     };
