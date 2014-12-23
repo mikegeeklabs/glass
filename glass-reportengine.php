@@ -1,18 +1,16 @@
 <?php
 function reports() {
-    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate  ;
-
-    #  ini_set('display_errors',1);
+    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate;
+    //GLASS-WARNING: This module is undergoing rapid re-write and transformation!
+    #   ini_set('display_errors',1);
     #  ini_set('display_startup_errors',1);
-    #  error_reporting(-1);
-
+    #   error_reporting(-1);
     include_once ('glass-core.php'); #redundant, but this can be initiated by CLI or other means.
     $db = glconnect();
- ##   list($login,$name,$level,$perms) = glauth() ;  
-    $seclevel = $level; #need to f&r seclevel ?
+    $seclevel = $level; # The report module/engine uses 'seclevel'
     if ($level < 5) {
         print "Not for you";
-        die;
+        return ; 
     }
     $portal = 'glass'; #for use with other systems I run. A stub.
     $role = 'dev'; #for use with other systems I run.
@@ -29,13 +27,13 @@ function reports() {
         reportheader();
         reporttopmenu();
         reportitemmenu();
-        reportfooter;
+        reportfooter();
     };
     if ($mode == 'item') {
         reportheader();
         reporttopmenu();
         reportitem();
-        reportfooter;
+        reportfooter();
     };
     if ($mode == 'export') {
         reportexport();
@@ -51,16 +49,15 @@ function reports() {
                 print "<div style='background:#ffFF88;font-size:x-large;'>&nbsp;&nbsp;<b>" . $load[0] . "</b>/<i>" . $load[1] . "</i>&nbsp;&nbsp;" . bbf('Extremely High System Load, please try again in 5 minutes') . "</div>";
                 return;
             }
-            if ($dirty) {
+            if ($dirty) { // set  $dirty = true in settings.inc if you want this. Useful.
                 runsql("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED");
             };
-            #aka Dirty Reads.
             #----------------------============================-----------------------------------------------
             reportrun();
         } else {
             reportschedule();
         };
-        reportfooter;
+        reportfooter();
     };
     if ($mode == 'reservoir') {
         reportheader();
@@ -73,14 +70,13 @@ function reports() {
     };
 };
 function reportqrun() {
-    # global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $item, $itemid, $fromdate, $todate, $vendornumber;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     include "settings.inc"; # get basic config variables - Note: Server configured to not deliver .inc files
     include_once ('glass-core.php');
     $db = glconnect();
-    $level = 90 ;
+    $level = 90;
     $query = "SELECT uniq,portal,login,itemid,request,completedatetime from reportq where completedatetime < '2001-01-01'";
-    $result2 = mysqli_query($db,$query) or die("Query failed : " . mysqli_error($db));
+    $result2 = mysqli_query($db, $query) or die("Query failed : " . mysqli_error($db));
     while (list($funiq, $portal, $login, $itemid, $request) = mysqli_fetch_row($result2)) {
         print "Running: $funiq $portal $login $itemid <br>$request";
         $_REQUEST = json_decode($request, true);
@@ -159,29 +155,30 @@ function reportschedule() {
     print quickshowr("select q.itemid as Item,report.itemname as Description ,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='glass.php?mode=reservoir'>open folder</i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
 };
 function reportrun() {
-    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate, $thousands, $decimals  ;
+    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate, $thousands, $decimals;
     # should recheck access control ;
     #    $db = glconnect2() ; #Will select a slave system first using other credentials
     $db = glconnect(); #Will select a slave system first
     $time_start = microtime(true);
     include "settings.inc"; # get basic config variables - Note: Server should be configured to not deliver .inc files
     $query = "select * from reports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
-    $results = gaafm("$query") ; 
-    $r = 0 ; 
+    $results = gaafm("$query");
+    $r = 0;
     foreach($results as $key => $val) {
-            $s = "\$$key = \"$val\" ; ";
-            eval($s);
-            $r++ ; 
-    } ; #messy way to set all column names to variables containing the data. 
+        $s = "\$$key = \"$val\" ; ";
+        eval($s);
+        $r++;
+    }; #messy way to set all column names to variables containing the data.
     if ($r < 1) {
         $query = "select * from localreports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
-        $results = gaafm("$query") ; 
-        $r = 0 ; 
+        $results = gaafm("$query");
+        $r = 0;
         foreach($results as $key => $val) {
             $s = "\$$key = \"$val\" ; ";
             eval($s);
-            $r++ ; 
-        } ; #messy way to set all column names to variables containing the data. 
+            $r++;
+        }; #messy way to set all column names to variables containing the data.
+        
     };
     if ($r < 1) {
         print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
@@ -210,10 +207,8 @@ function reportrun() {
         };
         $loop++;
         #An attempt at normallizing the query
-        $replace = array('/&#39;/','/&apos;/');
+        $replace = array('/&#39;/', '/&apos;/');
         $query = preg_replace($replace, '\'', $query);
-        
-        
         if (strlen($todate) < 11) {
             $todate.= ' 23:59:59';
         };
@@ -230,65 +225,64 @@ function reportrun() {
         $input5 = reportdetaintstrip($_REQUEST['input5']);
         $input6 = reportdetaintstrip($_REQUEST['input6']);
         $input6 = reportdetaintstrip($_REQUEST['input7']);
-        $input8 = reportdetaintstrip($_REQUEST['input8']);
+        $input8  = reportdetaintstrip($_REQUEST['input8']);
         $input9 = reportdetaintstrip($_REQUEST['input9']);
-
         if (preg_match("/\%/", $input1, $matches)) {
-            $replace = array('/= \'input1\'/','/\>= \'input1\'/','/\<= \'input1\'/');
+            $replace = array('/= \'input1\'/', '/\>= \'input1\'/', '/\<= \'input1\'/');
             $query = preg_replace($replace, "like 'input1'", $query);
         }
         if (preg_match("/\%/", $input2, $matches)) {
-            $replace = array('/= \'input2\'/','/\>= \'input2\'/','/\<= \'input2\'/');
+            $replace = array('/= \'input2\'/', '/\>= \'input2\'/', '/\<= \'input2\'/');
             $query = preg_replace($replace, "like 'input2'", $query);
         }
         if (preg_match("/\%/", $input3, $matches)) {
-            $replace = array('/= \'input3\'/','/\>= \'input3\'/','/\<= \'input3\'/');
+            $replace = array('/= \'input3\'/', '/\>= \'input3\'/', '/\<= \'input3\'/');
             $query = preg_replace($replace, "like 'input3'", $query);
         }
         if (preg_match("/\%/", $input4, $matches)) {
-            $replace = array('/= \'input4\'/','/\>= \'input4\'/','/\<= \'input4\'/');
+            $replace = array('/= \'input4\'/', '/\>= \'input4\'/', '/\<= \'input4\'/');
             $query = preg_replace($replace, "like 'input4'", $query);
         }
         if (preg_match("/\%/", $input5, $matches)) {
-            $replace = array('/= \'input5\'/','/\>= \'input5\'/','/\<= \'input5\'/');
+            $replace = array('/= \'input5\'/', '/\>= \'input5\'/', '/\<= \'input5\'/');
             $query = preg_replace($replace, "like 'input5'", $query);
         }
         if (preg_match("/\%/", $input6, $matches)) {
-            $replace = array('/= \'input6\'/','/\>= \'input6\'/','/\<= \'input6\'/');
+            $replace = array('/= \'input6\'/', '/\>= \'input6\'/', '/\<= \'input6\'/');
             $query = preg_replace($replace, "like 'input6'", $query);
         }
         if (preg_match("/\%/", $input7, $matches)) {
-            $replace = array('/= \'input7\'/','/\>= \'input7\'/','/\<= \'input7\'/');
+            $replace = array('/= \'input7\'/', '/\>= \'input7\'/', '/\<= \'input7\'/');
             $query = preg_replace($replace, "like 'input7'", $query);
         }
         if (preg_match("/\%/", $input8, $matches)) {
-            $replace = array('/= \'input8\'/','/\>= \'input8\'/','/\<= \'input8\'/');
+            $replace = array('/= \'input8\'/', '/\>= \'input8\'/', '/\<= \'input8\'/');
             $query = preg_replace($replace, "like 'input8'", $query);
         }
         if (preg_match("/\%/", $input9, $matches)) {
-            $replace = array('/= \'input9\'/','/\>= \'input9\'/','/\<= \'input9\'/');
+            $replace = array('/= \'input9\'/', '/\>= \'input9\'/', '/\<= \'input9\'/');
             $query = preg_replace($replace, "like 'input9'", $query);
         }
-        $query = preg_replace('/input1/', "$input1", $query);        
-        $query = preg_replace('/input2/', "$input2", $query);        
-        $query = preg_replace('/input3/', "$input3", $query);        
-        $query = preg_replace('/input4/', "$input4", $query);        
-        $query = preg_replace('/input5/', "$input5", $query);        
-        $query = preg_replace('/input6/', "$input6", $query);        
-        $query = preg_replace('/input7/', "$input7", $query);        
-        $query = preg_replace('/input8/', "$input8", $query);        
-        $query = preg_replace('/input9/', "$input9", $query);        
+        $query = preg_replace('/input1/', "$input1", $query);
+        $query = preg_replace('/input2/', "$input2", $query);
+        $query = preg_replace('/input3/', "$input3", $query);
+        $query = preg_replace('/input4/', "$input4", $query);
+        $query = preg_replace('/input5/', "$input5", $query);
+        $query = preg_replace('/input6/', "$input6", $query);
+        $query = preg_replace('/input7/', "$input7", $query);
+        $query = preg_replace('/input8/', "$input8", $query);
+        $query = preg_replace('/input9/', "$input9", $query);
         if (preg_match("/\;/", $query, $matches)) {
             $qs = split("[\;]", $query);
             foreach($qs as $qqq) {
                 #print "$qqq <p>" ;
                 if (strlen($qqq) > 5) {
-                    $result1 = mysqli_query($db,$qqq) or die("Query[] failed:  $qqq : <p>" . mysqli_error());
+                    $result1 = mysqli_query($db, $qqq) or die("Query[] failed:  $qqq : <p>" . mysqli_error());
                     $lastquery = $qqq;
                 };
             };
         } else {
-            $result1 = mysqli_query($db,$query) or die("Query 2 failed : $query <p>" . mysqli_error() );
+            $result1 = mysqli_query($db, $query) or die("Query 2 failed : $query <p>" . mysqli_error());
             $lastquery = $query;
         };
         #COMMON FOR EXPORT
@@ -345,12 +339,12 @@ function reportrun() {
             $xlsrow = 4;
         };
         #XLS END
-        $asnumbers = preg_split('/[\,|]/',$asnumbers) ; 
-        $totalss = preg_split('/[\,|]/',$totals) ; 
-        $groupon = preg_split('/[\,|]/',$groupon) ; 
-        $groupchart = preg_split('/[\,|]/',$groupchart) ; 
-        $totalchart = preg_split('/[\,|]/',$totalchart) ; 
-        $mapchart = preg_split('/[\,|]/',$mapchart) ; 
+        $asnumbers = preg_split('/[\,|]/', $asnumbers);
+        $totalss = preg_split('/[\,|]/', $totals);
+        $groupon = preg_split('/[\,|]/', $groupon);
+        $groupchart = preg_split('/[\,|]/', $groupchart);
+        $totalchart = preg_split('/[\,|]/', $totalchart);
+        $mapchart = preg_split('/[\,|]/', $mapchart);
         $c = 1;
         $cc = 0;
         while ($row = mysqli_fetch_assoc($result1)) {
@@ -460,7 +454,7 @@ function reportrun() {
                     $align = '';
                 };
                 #TRYING TO KEEP THIS SANE!
-                if (strtolower($key) == 'account' and $level > 40) {  #keeping this as an example for future customizations 
+                if (strtolower($key) == 'account' and $level > 40) { #keeping this as an example for future customizations
                     $dval = "<a href='glass.php?mode=login&account=$val' target='_NEW'>$dval</a>";
                     $acctz = $val;
                 };
@@ -478,8 +472,9 @@ function reportrun() {
                 } else {
                     $TLINE.= "<td style='$align'>$dval</td>";
                 };
-                $CSVLINE .= "\"$val\"," ;
-                if ($key == 'foobunnies') {  #generic examples of custom behavior per column type
+                $CSVLINE.= "\"$val\",";
+                if ($key == 'foobunnies') { #generic examples of custom behavior per column type
+                    
                 } elseif ($key == 'created') {
                     #Assumes YYYY/MM/DD but should work with anything?
                     $valtime = strtotime($val);
@@ -796,28 +791,28 @@ function detaintstripfilename2($string) {
 };
 function reportitem() {
     # global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $item, $itemid, $fromdate, $todate, $vendornumber ;
-    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate ;
+    global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath, $item, $itemid, $fromdate, $todate;
     #should recheck access control ;
     $sseclevel = $level;
     $query = "select * from reports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
-    $results = gaafm("$query") ; 
-    $r = 0 ; 
+    $results = gaafm("$query");
+    $r = 0;
     foreach($results as $key => $val) {
-            $s = "\$$key = \"$val\" ; ";
-            eval($s);
-            $r++ ; 
-    } ; #messy way to set all column names to variables containing the data. 
-
+        $s = "\$$key = \"$val\" ; ";
+        eval($s);
+        $r++;
+    }; #messy way to set all column names to variables containing the data.
     if ($r < 1) {
         #--
         $query = "select * from localreports where seclevel <= '$level' and (uniq = '$item' or itemid = '$itemid')  order by uniq limit 1";
-        $results = gaafm("$query") ; 
-        $r = 0 ; 
+        $results = gaafm("$query");
+        $r = 0;
         foreach($results as $key => $val) {
             $s = "\$$key = \"$val\" ; ";
             eval($s);
-            $r++ ; 
-        } ; #messy way to set all column names to variables containing the data. 
+            $r++;
+        }; #messy way to set all column names to variables containing the data.
+        
     };
     if (empty($account)) {
         $account = dt($_COOKIE['account']);
@@ -846,7 +841,6 @@ function reportitem() {
     $input7 = reportdetaintstrip($_REQUEST['input7']);
     $input8 = reportdetaintstrip($_REQUEST['input8']);
     $input9 = reportdetaintstrip($_REQUEST['input9']);
-
     if ($r < 1) {
         print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
         return;
@@ -856,6 +850,8 @@ function reportitem() {
         print "<div class=span2>$uniq</div>";
     };
     print "</div>";
+print "<h2>HERE</h2>" ; 
+
     print "<div class='row noprint'><div class='span6'>" . bbf("$itemdesc") . "</div></div>";
     $yy = 0; #Used for sexy adaptive layout
     #First lets see if there are fromdate/todate in the query.
@@ -906,6 +902,7 @@ EOF;
     #NOW TO LOOK FOR INPUT1 and format accordingly. Formats:  blank = text input  table.field.fielddesc   A|B|C|D
     #I would kill to be able to effectively do this one time for all inputs1/2/3/4/...
     #But I am not that smart. Cut/Paste/Find/Replace. Works for now.
+
     $yyinc = 50;
     if (!empty($input1field)) {
         $yy+= $yyinc;
@@ -926,7 +923,7 @@ EOF;
             } else {
                 $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
             };
-            $r = mysqli_query($db,$qi) or die("Error : " . mysqli_error($db));
+            $r = mysqli_query($db, $qi) or die("Error : " . mysqli_error($db));
             $inputselector = "\n" . "<select name=input1>";
             if (empty($input1)) {
                 $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
@@ -944,7 +941,7 @@ EOF;
                 };
             };
             $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysqli_fetch_row($r)) {  #not checked yet. 
+            while (list($issk, $isst) = mysqli_fetch_row($r)) { #not checked yet.
                 if ($issk == $isst) {
                     $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
                 } else {
@@ -969,9 +966,9 @@ EOF;
             };
             $inputselector.= "<optgroup label='$available'>";
             $inputselector.= "<option value='%'>% all</option>";
-            $replace = array('/&#39;/','/&apos;/');
+            $replace = array('/&#39;/', '/&apos;/');
             $query = preg_replace($replace, '\'', $input1source);
-            $result2 = mysqli_query($db,$query) or die("Query failed : " . mysqli_error($db));
+            $result2 = mysqli_query($db, $query) or die("Query failed : " . mysqli_error($db));
             while (list($one, $two, $three) = mysqli_fetch_row($result2)) {
                 $inputselector.= "<option value='$one'>$one $two $three</option>";
             };
@@ -1053,8 +1050,7 @@ EOF;
             print "<div class=controls><input class=\"span2\" name=input2 size=\"20\" type=\"text\" value=\"$input2\"></div>";
             print "</div>";
         };
-        
-#NOTES==MYSQL_ FUNCTIONS NOT UPDATED UNTIL TESTED WITH INPUT1        
+        #NOTES==MYSQL_ FUNCTIONS NOT UPDATED UNTIL TESTED WITH INPUT1
         if (preg_match("/\./", $input2source, $matches)) {
             $is = split("[\.]", $input2source);
             if ($is[0] == 'zippymaster') {
@@ -1064,7 +1060,7 @@ EOF;
             } else {
                 $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
             };
-            $r = mysqli_query($db,$qi) or die("Error : " . mysqli_error($db));
+            $r = mysqli_query($db, $qi) or die("Error : " . mysqli_error($db));
             $inputselector = "\n" . "<select name=input2>";
             if (empty($input2)) {
                 $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
@@ -1763,15 +1759,13 @@ EOF;
 function reporttopmenu() {
     #global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $multilang, $vendornumber ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-
-    print "<hr>" ; 
+    print "<hr>";
     if ($level > 40) {
-        print  "<a href='glass.php?mode=reservoir' class=button>Report Folder</a></li>";
-    } ; 
-    if (@in_array('editreport', $perms)) {
-        print  "<a href='reporteditor.php?mode=create' class=button>Create Report</a></li>";
+        print "<a href='glass.php?mode=reservoir' class=button>Report Folder</a></li>";
     };
-
+    if (@in_array('editreport', $perms)) { // May need to get added to reports ; 
+        print "<a href='reporteditor.php?mode=create' class=button>Create Report</a></li>";
+    };
 };
 function reportitemmenu() {
     #    global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $sseclevel, $vendornumber ;
@@ -1786,7 +1780,7 @@ function reportitemmenu() {
         and (uniq = '$searchfor' or itemid like '%$searchfor%' or itemname like '%$searchfor%' or itemdesc like '%$searchfor%') 
         order by itemgroup,itemid,uniq";
         if ($login == 'admin') { #full access dispite role ;
-            print "<div class='alert'>Admin Search: no roles enforced, also search query</div>";
+            print "<div>Admin Search: no roles enforced, also search query</div>";
             $query = "SELECT uniq,itemgroup,itemid,itemname,itemdesc,seclevel,availtologins,availtoroles from zr where 
         seclevel <= '$level' 
         and (uniq = '$searchfor' or itemid like '%$searchfor%' or itemname like '%$searchfor%' or itemdesc like '%$searchfor%' or query like '%$searchfor%') 
@@ -1797,12 +1791,10 @@ function reportitemmenu() {
         seclevel <= '$level' and (availtoroles like '%$role,%' or availtoroles like '%$role|%' or availtoroles = '') order by itemgroup,itemid,uniq";
     };
     $result2 = gaaafm($query);
-    #   print "<pre>Results:" .  print_r($result2,1) . "</pre>" ;
     $sumusage = 0;
     $peakusage = 0;
     $lastgroup = 'zz'; #dummy trigger setting
-    #FIRST INPUT STRING TO SEARCH FOR
-    $searchmenu = "<FORM ACTION='glass.php' METHOD='get' name='reportsearch' class='form-search'><input type='hidden' name='mode' value='search'>";
+    $searchmenu = "\n<FORM ACTION='glass.php' METHOD='get' name='reportsearch' class='form-search'><input type='hidden' name='mode' value='search'>";
     $searchmenu.= "<div class='input-append' style='padding:10px 0px 0px 10px;'>";
     $searchmenu.= "<input type='text' class='span2 search-query' name='searchfor' value='$searchfor'>";
     $searchmenu.= "<button class='btn' type='button' onclick=\"document.reportsearch.submit()\">Search</button>";
@@ -1810,66 +1802,51 @@ function reportitemmenu() {
     $searchmenu.= "</FORM>\n";
     foreach($result2 as $row) {
         $uniq = $row['uniq'];
-        $itemgroup = $row['itemid'];
+        $itemgroup = $row['itemgroup'];
         $itemid = $row['itemid'];
-        $itemname = $row['itemid'];
-        $itemdesc = $row['itemid'];
+        $itemname = $row['itemname'];
+        $itemdesc = $row['itemdesc'];
         $level = $row['seclevel'];
         $availtologins = $row['availtologins'];
         $availtoroles = $row['availtoroles'];
-        if ($itemgroup != "$lastgroup" and $lastgroup != 'Userz') { #keeping the User logic for a while.. Thinking
+        if ($itemgroup != "$lastgroup" and $lastgroup != 'Userz') {
             if ($lastgroup != 'zz') {
-                $mainmenu.= "\n</ul></p></div></div></section>\n\n";
+                $mainmenu.= "\n</ul></section>\n\n";
             };
             if ($itemgroup == '' or $itemgroup == 'User') {
                 #$itemgroup = "User";
-                
             };
             $sidemenu.= "<li><a href=\"#$itemgroup\">" . bbf("$itemgroup") . "</a></li>\n";
-            $mainmenu.= "\n<section id='$itemgroup'><div class='page-header'><h3>" . bbf("$itemgroup") . "</h3></div>\n";
-            $mainmenu.= "<div class=row><div class=span6><p><ul class=\"nav nav tabs nav-stacked\">\n";
+            $mainmenu.= "\n<section id='$itemgroup'><h3>" . bbf("$itemgroup") . "</h3>\n";
+            $mainmenu.= "<ul>\n";
         };
         $ss = "$uniq &gt;=$level $availtologins $availtoroles";
-        $mainmenu.= "<li><span style='position:relative;top:30px;right:40px;;font-weight:bold;color:#aaaaaa;'>$uniq</span><a href='$script?mode=item&item=$uniq&itemid=$itemid' title='$ss'><strong>" . bbf("$itemname") . "</strong></A>" . bbf("$itemdesc") . "</li><br>";
+        $mainmenu.= "<li>$uniq <a href='$script?mode=item&item=$uniq&itemid=$itemid' title='$ss'>" . bbf("$itemname") . "</A>&nbsp;" . bbf("$itemdesc") . "</li>\n";
         $lastgroup = $itemgroup;
     };
-    $mainmenu.= "</ul></p></div></div></section>";
+    $mainmenu.= "</ul>\n";
 
-    print <<<EOF
-<div class="container-fluid" id=foo>
-<body data-spy="scroll" data-target=".bs-docs-sidebar">
- <div class="row">
-      <div class="span3 bs-docs-sidebar">
-        <ul class="nav nav-list bs-docs-sidenav affix" id=leftmenu>
-EOF;
-    print "<li>$searchmenu</li>\n";
-    print "$sidemenu";
+    print "<div id=floatingmenu style='border:2px solid #FF00FF;position:fixed;top:5em;left:0em;'><ul>" ; 
+    print "$sidemenu $searchmenu\n";
     list($pending) = gafm("select count(uniq) from reportq where login = '$login' and completedatetime < '2001-01-01'");
     if ($pending > 0) {
         print "<li><a href=\"#pending\"><i class=\"icon-chevron-right\"></i>$pending " . bbf('pending') . "</a></li>\n";
     };
-    print <<<EOF
-        </ul>
-      </div>
-      <div class="span9">
-      
-      
-EOF;
-    #    print "$searchmenu" ;
+    print "\n</ul></div>\n" ; //div is end of floatingmenu
+
+    print "\n<div id=listofreports style='border:2px solid #006600;position:relative;left:15em;width:40em;'>\n" ; 
     print "$mainmenu";
+    
     if ($pending > 0) {
         include_once ("glass-core.php");
         $mainmenu = "\n<section id='pending'>\n";
-        $mainmenu.= "<div class=row><div class=span6><p><ul class=\"nav nav tabs nav-stacked\">\n";
         $mainmenu.= "<li>";
         $mainmenu.= quickshowr("select q.itemid as Item,report.itemname as Description,q.requestdatetime as Requested from reportq q left join reports on (report.itemid = q.itemid) where q.portal = '$portal' and q.login = '$login' and q.completedatetime < '2001-01-01'", 'nada', 'nada', "<a href='reports.php?mode=reservoir'><i class='icon-folder-open' style='font-size: 18px;'></i></a>&nbsp;&nbsp;" . bbf('Pending Items'), 9, '500px');
         $mainmenu.= "</li>";
-        $mainmenu.= "</ul></p></div></div></section>";
+        $mainmenu.= "</ul>";
         print $mainmenu;
     };
-    print "\n\n\n</div></div>";
-    print "</container>";
-    print "</div>"; #end noprint ?
+    print "\n</div>\n" ; 
     
 };
 function reportexport() {
@@ -1889,59 +1866,15 @@ function reportheader() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
     $r = bbf('Reports');
     #$brand = "<a class='brand' href='glass.php?mode=login'>$login</a>";
-    $brand = '' ; 
+    $brand = '';
     $dplang = 'en';
     if ($lang == 'fr' or $lang == 'es') {
         $dplang = $lang;
     };
-    print <<<EOF
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>GeekLabs Glass</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GLASS">
-    <meta name="author" content="GeekLabs - Mike Harrison">
-    <style type="text/css" media="print">
-      .noprint { display:none; }
-    </style>
-    <style type="text/css">
-      body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-      }
-    </style>
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <!-- Le fav and touch icons -->
-  </head>
-
-  <body>
-    <div class=noprint>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="reports.php">$brand</a>
-          <div class="nav-collapse">
-EOF;
-    
+    print "<style type=\"text/css\" media=\"print\"> .noprint { display:none; }</style>" ; 
 };
 function reportfooter() {
-    print <<<EOF
-    </div> <!-- /container -->
-
-  </body>
-</html>
-EOF;
-    
+    print "\n\n</body></html>\n";
 };
 function reportdetaintstrip($string) {
     $newstring = $string;
@@ -1966,7 +1899,8 @@ function reservoir($zcabinet, $zfolder) {
     };
     $cabinet = $zcabinet;
     if ($level < 50) {
-         die; # for now ;
+        die; # for now ;
+        
     };
     #first we do some dir/file checking/creation.
     $dir = reservoircheckdirs($portal, $cabinet, $folder);
@@ -2175,8 +2109,7 @@ function reservoircheckdirs($portal, $cabinet, $folder) {
     while (strlen($folder) < 4) {
         $folder = '0' . $folder;
     };
-    include('settings.inc') ; 
-    
+    include ('settings.inc');
     $dir = @fopen("$reservoir", "r");
     if (!($dir)) {
         mkdir("$reservoir");
