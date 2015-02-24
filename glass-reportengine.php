@@ -10,7 +10,7 @@ function reports() {
     $seclevel = $level; # The report module/engine uses 'seclevel'
     if ($level < 5) {
         print "Not for you";
-        return ; 
+        return;
     }
     $portal = 'glass'; #for use with other systems I run. A stub.
     $role = 'dev'; #for use with other systems I run.
@@ -63,7 +63,7 @@ function reports() {
         reportheader();
         reporttopmenu();
         reservoir($portal, $login);
-        reportfooter;
+        reportfooter();
     };
     if ($mode == 'reportqrun') {
         reportqrun();
@@ -845,14 +845,8 @@ function reportitem() {
         print "<div>#$item $itemid $level " . bbf("Report not found") . "\n</div>";
         return;
     };
-    print "<div class='row noprint'><div class='span6'><div class='pagetitle'><a href='glass.php?mode=item&item=$uniq'>" . bbf("$itemname") . "</a></div></div>";
-    if ($level > 40) {
-        print "<div class=span2>$uniq</div>";
-    };
-    print "</div>";
-print "<h2>HERE</h2>" ; 
-
-    print "<div class='row noprint'><div class='span6'>" . bbf("$itemdesc") . "</div></div>";
+    print "<div class='noprint title'><a href='glass.php?mode=item&item=$uniq'><span style='color:#888888;'>#$uniq &rarr;</span>&nbsp;" . bbf("$itemname") . "</a></div>";
+    print "<div class='noprint'>" . bbf("$itemdesc") . "</div>";
     $yy = 0; #Used for sexy adaptive layout
     #First lets see if there are fromdate/todate in the query.
     print "\n<form class='form-horizontal noprint' ACTION='$script' METHOD='get'><INPUT TYPE='hidden' NAME='mode' VALUE='run'><INPUT TYPE='hidden' NAME='item' VALUE='$uniq'><INPUT TYPE='hidden' NAME='itemid' VALUE='$itemid'> \n";
@@ -884,38 +878,38 @@ EOF;
         $ft = bbf('From');
         $tt = bbf('To');
         print <<<EOF
-    <div class='control-group'>
-    <div class="input-append date" id="fromdate" data-date="$fromdate" data-date-format="yyyy-mm-dd">
-        <label class="control-label" for=fromdate>$ft</label>
-        <div class=controls><input name=fromdate size="16" type="text" value="$fromdate" $r>
-        <span class="add-on"><i class="icon-calendar" style='font-size: 18px;'></i></span></div>
-    </div>
-    <div class="input-append date" id="todate" data-date="$todate" data-date-format="yyyy-mm-dd">
-        <label class="control-label" for=todate>$tt</label>
-        <div class=controls><input name=todate size="16" type="text" value="$todate" $r>
-        <span class="add-on"><i class="icon-calendar" style='font-size: 18px;'></i></span></div>
-    </div>
-    </div>
+        <label for=fromdate>$ft</label>
+        <input name=fromdate size="16" type="date" value="$fromdate" $r>
+        <label for=todate>$tt</label>
+        <input name=todate size="16" type="date" value="$todate" $r>
 EOF;
         
     }; # end match fromdate
     #NOW TO LOOK FOR INPUT1 and format accordingly. Formats:  blank = text input  table.field.fielddesc   A|B|C|D
     #I would kill to be able to effectively do this one time for all inputs1/2/3/4/...
     #But I am not that smart. Cut/Paste/Find/Replace. Works for now.
-
+    #KILLING TO REWITE THIS TOMORROW AM!
     $yyinc = 50;
-    if (!empty($input1field)) {
+
+    $inputs = 8 ; 
+    $i = 1 ; 
+    while($i <= $inputs) {
+     $s =  "\$inputfield = \${\"input\" . $i . \"field\"} ; " ; 
+     eval($s) ; 
+     $s =  "\$inputsource = \${\"input\" . $i . \"source\"} ; " ; 
+     eval($s) ; 
+     $s =  "\$input = \${\"input\" . $i} ; " ; 
+     eval($s) ; 
+    if (!empty($inputfield)) {
         $yy+= $yyinc;
         $selected = bbf('selected');
         $available = bbf('available');
         if (empty($input1source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input1'>$input1field</label>";
-            print "<div class=controls><input class=\"span2\" name=input1 size=\"20\" type=\"text\" value=\"$input1\"></div>";
-            print "</div>";
+            print "<label for='input$i'>$inputfield</label>";
+            print "<input name='input$i' size=\"20\" type=\"text\" value=\"$input\">";
         };
-        if (preg_match("/\./", $input1source, $matches)) {
-            $is = split("[\.]", $input1source);
+        if (preg_match("/\./", $inputsource, $matches)) {
+            $is = split("[\.]", $inputsource);
             if ($is[0] == 'zippymaster') {
                 $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
             } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
@@ -924,7 +918,7 @@ EOF;
                 $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
             };
             $r = mysqli_query($db, $qi) or die("Error : " . mysqli_error($db));
-            $inputselector = "\n" . "<select name=input1>";
+            $inputselector = "\n" . "<select name='input$i'>";
             if (empty($input1)) {
                 $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
             };
@@ -933,10 +927,10 @@ EOF;
                     $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
                 } else {
                     if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input1'>$input1</optgroup>";
+                        $inputselector.= "<optgroup label='$selected'><option value='$input'>$input</optgroup>";
                     } else {
-                        list($input1desc) = gafm("select $is[2] from $is[0] where $is[1] = '$input1' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input1'>$input1 - $input1desc</optgroup>";
+                        list($inputdesc) = gafm("select $is[2] from $is[0] where $is[1] = '$input' order by uniq limit 1");
+                        $inputselector.= "<optgroup label='$selected'><option value='$input'>$input - $inputdesc</optgroup>";
                     };
                 };
             };
@@ -949,67 +943,61 @@ EOF;
                 };
             };
             $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input1'>$input1field</label>";
-            print "<div class=controls>";
+            print "<label for='input$i'>$inputfield</label>";
             print $inputselector;
             $inputselector = '';
-            print "</div></div>";
         };
-        if (preg_match("/^select/", $input1source, $matches)) {
+        if (preg_match("/^select/", $inputsource, $matches)) {
             #$is = split("[\|]", $input1source);
             #if ($input1 == '%') {
             #    $input1 = $is[0];
             #};
-            if (!empty($input1)) {
-                $inputselector = "<optgroup label='$selected'><option value='$input1'>" . bbf($input1) . "</optgroup>";
+            if (!empty($input)) {
+                $inputselector = "<optgroup label='$selected'><option value='$input'>" . bbf($input) . "</optgroup>";
             };
             $inputselector.= "<optgroup label='$available'>";
             $inputselector.= "<option value='%'>% all</option>";
             $replace = array('/&#39;/', '/&apos;/');
-            $query = preg_replace($replace, '\'', $input1source);
+            $query = preg_replace($replace, '\'', $inputsource);
             $result2 = mysqli_query($db, $query) or die("Query failed : " . mysqli_error($db));
             while (list($one, $two, $three) = mysqli_fetch_row($result2)) {
                 $inputselector.= "<option value='$one'>$one $two $three</option>";
             };
             $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input1'>$input1field</label>";
-            print "<div class=controls><select name=input1 id=input1>";
+            print "<label for='input$i'>$input1field</label>";
+            print "<select name='input$i' id='input$i'>";
             print $inputselector;
             $inputselector = '';
-            print "</select></div></div>";
+            print "</select>";
         };
-        if (preg_match("/\|/", $input1source, $matches)) {
-            $is = split("[\|]", $input1source);
+        if (preg_match("/\|/", $inputsource, $matches)) {
+            $is = split("[\|]", $inputsource);
             if ($input1 == '%') {
                 $input1 = $is[0];
             };
             if (!empty($input1)) {
-                $inputselector = "<optgroup label='$selected'><option value='$input1'>" . bbf($input1) . "</optgroup>";
+                $inputselector = "<optgroup label='$selected'><option value='$input'>" . bbf($input) . "</optgroup>";
             };
             $inputselector.= "<optgroup label='$available'>";
             foreach($is as $s) {
                 $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
             };
             $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input1'>$input1field</label>";
-            print "<div class=controls><select name=input1 id=input1>";
+            print "<label for='input$i'>$inputfield</label>";
+            print "<select name='input$i' id='input$i'>";
             print $inputselector;
             $inputselector = '';
-            print "</select></div></div>";
+            print "</select>";
         };
-        if (preg_match("/datepicker/", $input1source, $matches)) {
-            if (empty($input1)) {
-                list($input1) = gafm("select date_format(now(),'%Y-%m-%d')");
+        if (preg_match("/datepicker/", $inputsource, $matches)) {
+            if (empty($input)) {
+                list($input) = gafm("select date_format(now(),'%Y-%m-%d')");
             };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input1').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input1\" data-date=\"$input1\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input1>$input1field</label><div class=controls><input name=input1 size=\"16\" type=\"text\" value=\"$input1\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
+            print "<label for='input$i'>$inputfield</label><input name='input$i' size=\"16\" type=\"text\" value=\"$input\">\n";
         };
-        if (preg_match("/accountpicker/", $input1source, $matches)) {
-            if (empty($input1)) {
-                $input1 = '%';
+        if (preg_match("/accountpicker/", $inputsource, $matches)) {
+            if (empty($input)) {
+                $input = '%';
             };
             print <<<EOF
 <script type="text/javascript">
@@ -1033,643 +1021,22 @@ var q;
 </HEAD>
 <body onload="sf();liveSearchInit();">
 EOF;
-            print "<div class='control-group'><label class=\"control-label\" for=input1>$input1field</label><div class=controls>";
+            print "<label class=\"control-label\" for='input$i'>$inputfield</label>"; #this one needs some testing.
             print "<table><tr><td colspan=3>";
-            print "<input type=text name=input1 id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input1'></td></tr>";
+            print "<input type=text name='input$i' id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input'></td></tr>";
             print '<tr><td colspan=3><div id="picked" style="display: none;"></tr><tr><td colspan=3><div id="LSResult" style="display: none;"><div id="LSShadow"></div></tr></table>';
-            print "</div></div>";
+            print "";
         };
     };
-    if (!empty($input2field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input2source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input2'>$input2field</label>";
-            print "<div class=controls><input class=\"span2\" name=input2 size=\"20\" type=\"text\" value=\"$input2\"></div>";
-            print "</div>";
-        };
-        #NOTES==MYSQL_ FUNCTIONS NOT UPDATED UNTIL TESTED WITH INPUT1
-        if (preg_match("/\./", $input2source, $matches)) {
-            $is = split("[\.]", $input2source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysqli_query($db, $qi) or die("Error : " . mysqli_error($db));
-            $inputselector = "\n" . "<select name=input2>";
-            if (empty($input2)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input2)) {
-                if ($input2 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input2'>$input2</optgroup>";
-                    } else {
-                        list($input2desc) = gafm("select $is[2] from $is[0] where $is[1] = '$input2' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input2'>$input2 - $input2desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input2'>$input2field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input2source, $matches)) {
-            $is = split("[\|]", $input2source);
-            if ($input2 == '%') {
-                $input2 = $is[0];
-            };
-            if (!empty($input2)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input2'>" . bbf($input2) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                if (preg_match("/\:/", $s, $matches)) {
-                    $iss = split("[\:]", $s);
-                    $inputselector.= "<option value='$iss[0]'>$iss[0] = " . bbf($iss[1]) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input2'>$input2field</label>";
-            print "<div class=controls><select name=input2 id=input2>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input2source, $matches)) {
-            if (empty($input2)) {
-                list($input2) = gafm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input2').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input2\" data-date=\"$input2\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input2>$input2field</label><div class=controls><input name=input2 size=\"16\" type=\"text\" value=\"$input2\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-        if (preg_match("/accountpicker/", $input2source, $matches)) {
-            if (empty($input2)) {
-                $input2 = '%';
-            };
-            print <<<EOF
-<script type="text/javascript">
-<!--
-var q;
-  function sf(){
-    q=document.getElementById('livesearch');
-    q.focus();
-  }
-  function tf() {
-   if (q.value==""){
-     alert("Try meternumber or phone number");
-     q.focus();
-     return false;
-   }
- return liveSearchSubmit()
- }
-// -->
-</script>
-<script src="glass-lookup.js" type="text/javascript"></script>
-</HEAD>
-<body onload="sf();liveSearchInit();">
-EOF;
-            print "<div class='control-group'><label class=\"control-label\" for=input2>$input2field</label><div class=controls>";
-            print "<table><tr><td colspan=3>";
-            print "<input  class=\"input-medium search-query\" type=text name=input2 id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input2'></td></tr>";
-            print '<tr><td colspan=3><div id="picked" style="display: none;"></tr><tr><td colspan=3><div id="LSResult" style="display: none;"><div id="LSShadow"></div></tr></table>';
-            print "</div></div>";
-        };
-    };
-    if (!empty($input3field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input3source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input3'>$input3field</label>";
-            print "<div class=controls><input class=\"span2\" name=input3 size=\"20\" type=\"text\" value=\"$input3\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input3source, $matches)) {
-            $is = split("[\.]", $input3source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input3>";
-            if (empty($input3)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input3)) {
-                if ($input3 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input3'>$input3</optgroup>";
-                    } else {
-                        list($input3desc) = gafm("select $is[2] from $is[0] where $is[1] = '$input3' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input3'>$input3 - $input3desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input3'>$input3field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input3source, $matches)) {
-            $is = split("[\|]", $input3source);
-            if ($input3 == '%') {
-                $input3 = $is[0];
-            };
-            if (!empty($input3)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input3'>" . bbf($input3) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input3'>$input3field</label>";
-            print "<div class=controls><select name=input3 id=input3>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input3source, $matches)) {
-            if (empty($input3)) {
-                list($input3) = gafm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input3').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input3\" data-date=\"$input3\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input3>$input3field</label><div class=controls><input name=input3 size=\"16\" type=\"text\" value=\"$input3\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-        if (preg_match("/accountpicker/", $input3source, $matches)) {
-            if (empty($input3)) {
-                $input3 = '%';
-            };
-            print <<<EOF
-<script type="text/javascript">
-<!--
-var q;
-  function sf(){
-    q=document.getElementById('livesearch');
-    q.focus();
-  }
-  function tf() {
-   if (q.value==""){
-     alert("Try meternumber or phone number");
-     q.focus();
-     return false;
-   }
- return liveSearchSubmit()
- }
-// -->
-</script>
-<script src="glass-lookup.js" type="text/javascript"></script>
-</HEAD>
-<body onload="sf();liveSearchInit();">
-EOF;
-            print "<div class='control-group'><label class=\"control-label\" for=input3>$input3field</label><div class=controls>";
-            print "<table><tr><td colspan=3>";
-            print "<input  class=\"input-medium search-query\" type=text name=input3 id=\"livesearch\" onKeypress=\"liveSearchStart('wallet')\" size=15 value='$input3'></td></tr>";
-            print '<tr><td colspan=3><div id="picked" style="display: none;"></tr><tr><td colspan=3><div id="LSResult" style="display: none;"><div id="LSShadow"></div></tr></table>';
-            print "</div></div>";
-        };
-    };
-    if (!empty($input4field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input4source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input4'>$input4field</label>";
-            print "<div class=controls><input class=\"span2\" name=input4 size=\"20\" type=\"text\" value=\"$input4\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input4source, $matches)) {
-            $is = split("[\.]", $input4source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input4>";
-            if (empty($input4)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input4)) {
-                if ($input4 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input4'>$input4</optgroup>";
-                    } else {
-                        list($input4desc) = gafm("select $is[2] from $is[0] where $is[1] = '$input4' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input4'>$input4 - $input4desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input4'>$input4field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input4source, $matches)) {
-            $is = split("[\|]", $input4source);
-            if ($input4 == '%') {
-                $input4 = $is[0];
-            };
-            if (!empty($input4)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input4'>" . bbf($input4) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input4'>$input4field</label>";
-            print "<div class=controls><select name=input4 id=input4>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input4source, $matches)) {
-            if (empty($input4)) {
-                list($input4) = gafm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input4').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input4\" data-date=\"$input4\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input4>$input4field</label><div class=controls><input name=input4 size=\"16\" type=\"text\" value=\"$input4\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-    };
-    if (!empty($input5field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input5source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input5'>$input5field</label>";
-            print "<div class=controls><input class=\"span2\" name=input5 size=\"20\" type=\"text\" value=\"$input5\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input5source, $matches)) {
-            $is = split("[\.]", $input5source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input5>";
-            if (empty($input5)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input5)) {
-                if ($input5 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input5'>$input5</optgroup>";
-                    } else {
-                        list($input5desc) = gafm("select $is[2] from $is[0] where $is[1] = '$input5' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input5'>$input5 - $input5desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input5'>$input5field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input5source, $matches)) {
-            $is = split("[\|]", $input5source);
-            if ($input5 == '%') {
-                $input5 = $is[0];
-            };
-            if (!empty($input5)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input5'>" . bbf($input5) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input5'>$input5field</label>";
-            print "<div class=controls><select name=input5 id=input5>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input5source, $matches)) {
-            if (empty($input5)) {
-                $input5 = gsfm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input5').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input5\" data-date=\"$input5\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input5>$input5field</label><div class=controls><input name=input5 size=\"16\" type=\"text\" value=\"$input5\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-    };
-    if (!empty($input6field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input6source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input6'>$input6field</label>";
-            print "<div class=controls><input class=\"span2\" name=input6 size=\"20\" type=\"text\" value=\"$input6\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input6source, $matches)) {
-            $is = split("[\.]", $input6source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input6>";
-            if (empty($input6)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input6)) {
-                if ($input6 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input6'>$input6</optgroup>";
-                    } else {
-                        $input6desc = gsfm("select $is[2] from $is[0] where $is[1] = '$input6' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input6'>$input6 - $input6desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input6'>$input6field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input6source, $matches)) {
-            $is = split("[\|]", $input6source);
-            if ($input6 == '%') {
-                $input6 = $is[0];
-            };
-            if (!empty($input6)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input6'>" . bbf($input6) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input6'>$input6field</label>";
-            print "<div class=controls><select name=input6 id=input6>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input6source, $matches)) {
-            if (empty($input6)) {
-                $input6 = gsfm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input6').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input6\" data-date=\"$input6\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input6>$input6field</label><div class=controls><input name=input6 size=\"16\" type=\"text\" value=\"$input6\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-    };
-    if (!empty($input7field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input7source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input7'>$input7field</label>";
-            print "<div class=controls><input class=\"span2\" name=input7 size=\"20\" type=\"text\" value=\"$input7\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input7source, $matches)) {
-            $is = split("[\.]", $input7source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input7>";
-            if (empty($input7)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input7)) {
-                if ($input7 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input7'>$input7</optgroup>";
-                    } else {
-                        $input7desc = gsfm("select $is[2] from $is[0] where $is[1] = '$input7' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input7'>$input7 - $input7desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input7'>$input7field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input7source, $matches)) {
-            $is = split("[\|]", $input7source);
-            if ($input7 == '%') {
-                $input7 = $is[0];
-            };
-            if (!empty($input7)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input7'>" . bbf($input7) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input7'>$input7field</label>";
-            print "<div class=controls><select name=input7 id=input7>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input7source, $matches)) {
-            if (empty($input7)) {
-                $input7 = gsfm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input7').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input7\" data-date=\"$input7\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input7>$input7field</label><div class=controls><input name=input7 size=\"16\" type=\"text\" value=\"$input7\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-    };
-    if (!empty($input8field)) {
-        $yy+= $yyinc;
-        $selected = bbf('selected');
-        $available = bbf('available');
-        if (empty($input8source)) {
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input8'>$input8field</label>";
-            print "<div class=controls><input class=\"span2\" name=input8 size=\"20\" type=\"text\" value=\"$input8\"></div>";
-            print "</div>";
-        };
-        if (preg_match("/\./", $input8source, $matches)) {
-            $is = split("[\.]", $input8source);
-            if ($is[0] == 'zippymaster') {
-                $qi = "select $is[1],$is[2] from $is[0] where availableto like '%$portal%' order by $is[2]";
-            } elseif ($is[0] == 'perms' or $is[0] == 'seclevel' or $is[0] == 'substatus' or $is[0] == 'statustypeid') {
-                $qi = "select $is[1],$is[2] from $is[0] order by $is[2]";
-            } else {
-                $qi = "select distinct($is[1]),$is[2] from $is[0] where portal = '$portal' order by $is[2]";
-            };
-            $r = mysql_query($qi, $db) or die("Error : " . mysql_error());
-            $inputselector.= "\n" . "<select name=input8>";
-            if (empty($input8)) {
-                $inputselector.= "<optgroup label='$selected'><option value=''>blank ''</optgroup>";
-            };
-            if (!empty($input8)) {
-                if ($input8 == '%') {
-                    $inputselector.= "<optgroup label='$selected'><option value='%'>all %</optgroup>";
-                } else {
-                    if ($is[1] == $is[2]) {
-                        $inputselector.= "<optgroup label='$selected'><option value='$input8'>$input8</optgroup>";
-                    } else {
-                        $input8desc = gsfm("select $is[2] from $is[0] where $is[1] = '$input8' order by uniq limit 1");
-                        $inputselector.= "<optgroup label='$selected'><option value='$input8'>$input8 - $input8desc</optgroup>";
-                    };
-                };
-            };
-            $inputselector.= "<optgroup label='$available'><option value='%'>" . bbf('all') . " %<option value=''>" . bbf('blank') . " ''";
-            while (list($issk, $isst) = mysql_fetch_row($r)) {
-                if ($issk == $isst) {
-                    $inputselector.= "<option value='$issk'>" . bbf($isst) . "</option>\n";
-                } else {
-                    $inputselector.= "<option value='$issk'>" . bbf($issk) . ' - ' . bbf($isst) . "</option>\n";
-                };
-            };
-            $inputselector.= "</optgroup></select>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input8'>$input8field</label>";
-            print "<div class=controls>";
-            print $inputselector;
-            $inputselector = '';
-            print "</div></div>";
-        };
-        if (preg_match("/\|/", $input8source, $matches)) {
-            $is = split("[\|]", $input8source);
-            if ($input8 == '%') {
-                $input8 = $is[0];
-            };
-            if (!empty($input8)) {
-                $inputselector.= "<optgroup label='$selected'><option value='$input8'>" . bbf($input8) . "</optgroup>";
-            };
-            $inputselector.= "<optgroup label='$available'>";
-            foreach($is as $s) {
-                $inputselector.= "<option value='$s'>" . bbf($s) . "</option>\n";
-            };
-            $inputselector.= "</optgroup>\n";
-            print "<div class='control-group'>";
-            print "<label class='control-label' for='input8'>$input8field</label>";
-            print "<div class=controls><select name=input8 id=input8>";
-            print $inputselector;
-            $inputselector = '';
-            print "</select></div></div>";
-        };
-        if (preg_match("/datepicker/", $input8source, $matches)) {
-            if (empty($input8)) {
-                $input8 = gsfm("select date_format(now(),'%Y-%m-%d')");
-            };
-            print "<script  type=\"text/javascript\" charset=\"utf-8\"> $(function() { $('#input8').datepicker(); });</script>\n";
-            print "<div class='control-group'><div class=\"input-append date\" id=\"input8\" data-date=\"$input8\" data-date-format=\"yyyy-mm-dd\"><label class=\"control-label\" for=input8>$input8field</label><div class=controls><input name=input8 size=\"16\" type=\"text\" value=\"$input8\"><span class=\"add-on\"><i class=\"icon-calendar\" style='font-size: 18px;'></i></span>/div></div></div>\n";
-        };
-    };
+    $i++ ; 
+   } ;  
+    #-----------------------------------------------END LOOP FOR 8 INPUTS
+    
+    
+    
+    
+    
+    
     print "<div class='muted'>$displaynotes</div>";
     #Now the big run button.
     $yy+= 50;
@@ -1759,13 +1126,8 @@ EOF;
 function reporttopmenu() {
     #global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $multilang, $vendornumber ;
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
-    print "<hr>";
-    if ($level > 40) {
-        print "<a href='glass.php?mode=reservoir' class=button>Report Folder</a></li>";
-    };
-    if (@in_array('editreport', $perms)) { // May need to get added to reports ; 
-        print "<a href='reporteditor.php?mode=create' class=button>Create Report</a></li>";
-    };
+    #Currently all of these items are in the sidemenu.
+    
 };
 function reportitemmenu() {
     #    global $portal, $login, $account, $mode, $submode, $subsubmode, $subsubsubmode, $action, $script, $db, $fromip, $level, $lang, $role, $perms, $sseclevel, $vendornumber ;
@@ -1800,6 +1162,9 @@ function reportitemmenu() {
     $searchmenu.= "<button class='btn' type='button' onclick=\"document.reportsearch.submit()\">Search</button>";
     $searchmenu.= "</div>";
     $searchmenu.= "</FORM>\n";
+    if ($level > 40) {
+        $sidemenu.= "<li><a href='glass.php?mode=reservoir'>Report Folder</a></li>";
+    };
     foreach($result2 as $row) {
         $uniq = $row['uniq'];
         $itemgroup = $row['itemgroup'];
@@ -1815,6 +1180,7 @@ function reportitemmenu() {
             };
             if ($itemgroup == '' or $itemgroup == 'User') {
                 #$itemgroup = "User";
+                
             };
             $sidemenu.= "<li><a href=\"#$itemgroup\">" . bbf("$itemgroup") . "</a></li>\n";
             $mainmenu.= "\n<section id='$itemgroup'><h3>" . bbf("$itemgroup") . "</h3>\n";
@@ -1825,18 +1191,18 @@ function reportitemmenu() {
         $lastgroup = $itemgroup;
     };
     $mainmenu.= "</ul>\n";
-
-    print "<div id=floatingmenu style='border:2px solid #FF00FF;position:fixed;top:5em;left:0em;'><ul>" ; 
+    if (@in_array('editreport', $perms)) { // May need to get added to reports ;
+        $sidemenu.= "<li><a href='reporteditor.php?mode=create'>Create Report</a></li>";
+    };
+    print "<div id=floatingmenu style='border:2px solid #FF00FF;position:fixed;top:5em;left:0em;'><ul>";
     print "$sidemenu $searchmenu\n";
     list($pending) = gafm("select count(uniq) from reportq where login = '$login' and completedatetime < '2001-01-01'");
     if ($pending > 0) {
         print "<li><a href=\"#pending\"><i class=\"icon-chevron-right\"></i>$pending " . bbf('pending') . "</a></li>\n";
     };
-    print "\n</ul></div>\n" ; //div is end of floatingmenu
-
-    print "\n<div id=listofreports style='border:2px solid #006600;position:relative;left:15em;width:40em;'>\n" ; 
+    print "\n</ul></div>\n"; //div is end of floatingmenu
+    print "\n<div id=listofreports style='border:2px solid #006600;position:relative;left:15em;width:40em;'>\n";
     print "$mainmenu";
-    
     if ($pending > 0) {
         include_once ("glass-core.php");
         $mainmenu = "\n<section id='pending'>\n";
@@ -1846,8 +1212,7 @@ function reportitemmenu() {
         $mainmenu.= "</ul>";
         print $mainmenu;
     };
-    print "\n</div>\n" ; 
-    
+    print "\n</div>\n";
 };
 function reportexport() {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
@@ -1871,7 +1236,7 @@ function reportheader() {
     if ($lang == 'fr' or $lang == 'es') {
         $dplang = $lang;
     };
-    print "<style type=\"text/css\" media=\"print\"> .noprint { display:none; }</style>" ; 
+    print "<style type=\"text/css\" media=\"print\"> .noprint { display:none; }</style>";
 };
 function reportfooter() {
     print "\n\n</body></html>\n";
@@ -1909,7 +1274,7 @@ function reservoir($zcabinet, $zfolder) {
         $dir = detaintstripdir($_REQUEST['dir']);
         $subdir = detaintstripdir($_REQUEST['subdir']);
     };
-    $filename = detaintstripfilename($_REQUEST['filename']);
+    $filename = detaintstripfilename2($_REQUEST['filename']);
     if ($subsubmode == 'view') {
         reservoirview($dir, $filename);
     };
