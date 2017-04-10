@@ -37,8 +37,8 @@ CREATE TABLE `customers` (
   `state` varchar(20) DEFAULT NULL,
   `postalcode` varchar(20) DEFAULT NULL,
   `countrycode` varchar(10) DEFAULT '',
-  `created` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `lastlogin` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `created` datetime NOT NULL DEFAULT '2001-01-01 01:01:01',
+  `lastlogin` datetime NOT NULL DEFAULT '2001-01-01 01:01:01',
   `fromip` varchar(20) NOT NULL DEFAULT '127.0.0.2',
   PRIMARY KEY (`uniq`),
   UNIQUE KEY `id` (`uniq`),
@@ -54,7 +54,7 @@ CREATE TABLE `customers` (
 
 LOCK TABLES `customers` WRITE;
 /*!40000 ALTER TABLE `customers` DISABLE KEYS */;
-INSERT INTO `customers` VALUES (4,'test1234','$2y$10$.7zWCLljOmX.oyCvG7CMgOvf.Eqt5yY7l5niurC0kcxd/Dw7a3JBy',5,'Mike Harrison','4239333902','mike@geeklabs.com','','','','','Confusion','','','0000-00-00 00:00:00','0000-00-00 00:00:00','127.0.0.2');
+INSERT INTO `customers` VALUES (4,'test1234','$2y$10$.7zWCLljOmX.oyCvG7CMgOvf.Eqt5yY7l5niurC0kcxd/Dw7a3JBy',5,'Mike Harrison','4239333902','mike@geeklabs.com','','','','','Confusion','','','2001-01-01 01:01:01','2001-01-01 01:01:01','127.0.0.2');
 /*!40000 ALTER TABLE `customers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -136,7 +136,7 @@ CREATE TABLE `localreports` (
   `outputmode` varchar(80) DEFAULT 'NOW|OFFLINE|EMAIL',
   `counter` int(10) DEFAULT '0',
   `comments` text,
-  `created` date NOT NULL DEFAULT '0000-00-00',
+  `created` date NOT NULL DEFAULT '2001-01-01',
   `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `displaynotes` text,
   `groupchart` text,
@@ -209,8 +209,8 @@ CREATE TABLE `reportq` (
   `login` varchar(20) NOT NULL DEFAULT 'invalid',
   `itemid` varchar(20) NOT NULL DEFAULT 'invalid',
   `request` text,
-  `requestdatetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `completedatetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `requestdatetime` datetime NOT NULL DEFAULT '2001-01-01 01:01:01',
+  `completedatetime` datetime NOT NULL DEFAULT '2001-01-01 01:01:01',
   `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`uniq`),
   UNIQUE KEY `id` (`uniq`),
@@ -280,7 +280,7 @@ CREATE TABLE `reports` (
   `fieldcharlimit` int(6) DEFAULT '40',
   `maxtime` double(16,4) DEFAULT '0.0000',
   `counter` int(10) DEFAULT '0',
-  `created` date NOT NULL DEFAULT '0000-00-00',
+  `created` date NOT NULL DEFAULT '2001-01-01',
   `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`uniq`),
   UNIQUE KEY `id` (`uniq`),
@@ -399,7 +399,7 @@ CREATE TABLE `users` (
   `passwd` varchar(255) NOT NULL DEFAULT '87654321ABCDEF',
   `level` int(5) NOT NULL DEFAULT '0',
   `name` varchar(20) NOT NULL DEFAULT '',
-  `created` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `created` timestamp NOT NULL DEFAULT '2001-01-01 01:01:01',
   `lastmod` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `email` varchar(200) DEFAULT '',
   PRIMARY KEY (`uniq`),
