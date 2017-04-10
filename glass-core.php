@@ -146,7 +146,7 @@ function gltable($a,$toton) {
   return "$header\n$theader\n$trow\n$tfooter\n$footer" ; 
 } ; 
 function dt($string) {
-  global $lang ; 
+  global $db,$lang ; 
    if (empty($string)) {
     } else {
         $string = trim($string) ; 
@@ -154,12 +154,12 @@ function dt($string) {
         $string = preg_replace($strip, '', $string);
         $strip = array('/\'/');
         $string = preg_replace($strip, '&amp;', $string);
-        $string = mysql_escape_string($string) ; 
+        $string = mysqli_escape_string($db,$string) ; 
         return $string ;
     };
 } ; 
 function dtemail($string) {
-  global $lang ; 
+  global $db,$lang ; 
    if (empty($string)) {
         return '';
     } else {
@@ -168,7 +168,7 @@ function dtemail($string) {
         $string = preg_replace($strip, '', $string);
         $strip = array('/\'/');
         $string = preg_replace($strip, '&amp;', $string);
-        $string = mysql_escape_string($string) ; 
+        $string = mysqli_escape_string($db,$string) ; 
         return $string ;
     };
 } ; 
@@ -181,7 +181,7 @@ function dtless($string) {
         $string = trim($string) ; 
         $strip = array('/\'/');
         $string = preg_replace($strip, '&amp;', $string);
-        $string = mysql_escape_string($string) ; 
+        $string = mysqli_escape_string($db,$string) ; 
         return $string ;
     };
 } ; 
