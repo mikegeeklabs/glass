@@ -181,13 +181,16 @@ function gltablesearch() {
 };
 function gltableedit($table, $uniq, $editmode, $horvert, $options) {
     global $db, $mode, $submode, $subsubmode, $subsubsubmode, $action, $lang, $logic, $script, $fromip, $login, $name, $level, $perms, $csspath;
+
     if ($subsubsubmode == 'zadd') {
         $strip = array('/zadd\_/');
         $table = preg_replace($strip, '', $table);
         #print "New table name: $table <br>" ;
-        $query = "insert into $table (uniq) values ('')";
-        $result = $db->query($query) or die("Insert failed, probably duplicating an existing record");
+        $result = $db->query('SET FOREIGN_KEY_CHECKS=0') or die("set keys off failed");
+        $query = "insert into $table (uniq) values ('0')"; #updated for newer mysql on Ubuntu 16.04LTS
+        $result = $db->query($query) or die("Insert $table failed, probably duplicating an existing record  <br>$query");
         $uniq = mysqli_insert_id($db);
+        $result = $db->query('SET FOREIGN_KEY_CHECKS=1') or die("set keys off failed");
         #print "Table: $table Uniq: $uniq" ;
         if ($uniq < 1) {
             print "Error inserting record";
@@ -195,6 +198,8 @@ function gltableedit($table, $uniq, $editmode, $horvert, $options) {
         };
         $subsubmode = 'save';
     };
+
+
     if ($subsubmode == 'save') {
         #glprintr($_REQUEST) ; 
         while (list($key, $val) = each($_REQUEST)) {

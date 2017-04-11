@@ -5,5 +5,6 @@ mysqladmin -pnotapassword create glass
 mysql -pnotapassword glass <database.sql
 echo "CREATE USER 'glass'@'localhost' IDENTIFIED BY 'nopepassword';" | mysql -pnotapassword
 echo "GRANT ALL PRIVILEGES ON glass.* TO 'glass'@'localhost';" | mysql -pnotapassword
+echo "GRANT ALTER, CREATE ON glass TO 'glass'@'localhost';" | mysql -pnotapassword
 echo "FLUSH PRIVILEGES;" | mysql -pnotapassword 
 echo DELETE THIS FILE WHEN DONE
